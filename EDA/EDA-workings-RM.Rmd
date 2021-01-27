@@ -1,0 +1,362 @@
+---
+title: 'FEMA EDA'
+subtitle: 'Individual and Households Program - Hurricane Maria'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+```{r}
+# Turn of scientific notation
+options(scipen=999)
+```
+
+# 1. Exploratory Data Analysis
+
+These questions are taken from Question 12 of chapter of the textbook.
+
+```{r}
+# Read data
+d <- data.frame(fread(file = './FEMA-DR-4339-PR.csv', fill = TRUE))
+
+# Convert variables names to lower case
+names(d) <- tolower(names(d))
+
+# Convert boolean to numeric
+cols <- sapply(d, is.logical)
+d[, cols] <- lapply(d[, cols], as.numeric)
+d <- data.table(d)
+
+# Rename variables
+setnames(d, old = c('damagedcity', 'damagedstateabbreviation', 'damagedzipcode'),
+                 new = c('city', 'state', 'zipcode'))
+
+head(d)
+```
+
+## High-level Summaries
+
+```{r}
+summary(d)
+```
+
+- IHP referral: 80%
+- IHP eligible: 42%
+- IHP Amount: $1993
+
+- Flood insurance: 7%
+- Other Needs Assistance (ONA) referral: 57%
+
+- House Damaged: 64%
+- Homeowners insurance: 15%
+- HA referral: 67%
+- HA eligible: 20
+- HA amount: $685
+
+- Utilities out: 94%
+- Food need: 100%
+
+- Inspected: 68%
+
+```{r}
+d[ownrent == 'Owner' , .(count = .N), keyby=c('ownrent', 'hastatus')]
+```
+
+## HA Status Investigation
+
+```{r, fig.width=10, fig.height=4.5}
+# HA status
+(d_hastatus <- d[ , .(count = .N,
+                      ihpeligible = sum(ihpeligible),
+                      haeligible = sum(haeligible),                  
+                      ihpamount = mean(ihpamount),
+                      haamount = mean(haamount),
+                      onaamount = mean(onaamount),
+                      replacementamount = mean(replacementamount)), keyby=hastatus])
+
+# Counts - reorder and select top 10
+d_hastatus$hastatus <- factor(d_hastatus$hastatus, levels = d_hastatus$hastatus[order(d_hastatus$count)])
+top_n <- head(d_hastatus[order(count, decreasing = TRUE)], 10)
+
+ggplot(top_n, aes(x=hastatus, y=count)) +
+                geom_col() +
+                coord_flip() +
+                labs(title = 'Counts',
+                     x = 'HA status',
+                     y = 'Count')
+
+# IHP eligible - reorder and select top 10
+d_hastatus$hastatus <- factor(d_hastatus$hastatus, levels = d_hastatus$hastatus[order(d_hastatus$ihpeligible)])
+top_n <- head(d_hastatus[order(ihpeligible, decreasing = TRUE)], 10)
+
+ggplot(top_n, aes(x=hastatus, y=ihpeligible)) +
+                geom_col() +
+                coord_flip() +
+                labs(title = 'IHP Eligible',
+                     x = 'HA status',
+                     y = 'IHP eligible ($)')
+
+# IHP amount - reorder and select top 10
+d_hastatus$hastatus <- factor(d_hastatus$hastatus, levels = d_hastatus$hastatus[order(d_hastatus$ihpamount)])
+top_n <- head(d_hastatus[order(ihpamount, decreasing = TRUE)], 10)
+
+ggplot(top_n, aes(x=hastatus, y=ihpamount)) +
+                geom_col() +
+                coord_flip() +
+                labs(title = 'IHP Amount',
+                     x = 'HA status',
+                     y = 'IHP amount')
+
+
+# HA eligible - reorder and select top 10
+d_hastatus$hastatus <- factor(d_hastatus$hastatus, levels = d_hastatus$hastatus[order(d_hastatus$haeligible)])
+top_n <- head(d_hastatus[order(haeligible, decreasing = TRUE)], 10)
+
+ggplot(top_n, aes(x=hastatus, y=haeligible)) +
+                geom_col() +
+                coord_flip() +
+                labs(title = 'HA Eligible',
+                     x = 'HA status',
+                     y = 'HA eligible ($)')
+
+# HA amount - reorder and select top 10
+d_hastatus$hastatus <- factor(d_hastatus$hastatus, levels = d_hastatus$hastatus[order(d_hastatus$haamount)])
+top_n <- head(d_hastatus[order(haamount, decreasing = TRUE)], 10)
+
+ggplot(top_n, aes(x=hastatus, y=haamount)) +
+                geom_col() +
+                coord_flip() +
+                labs(title = 'HA Amount',
+                     x = 'HA status',
+                     y = 'HA amount ($)')
+```
+
+**Which `hastatus` codes relate to which assistance program/funds?**
+
+```{r, fig.width=8, fig.height=8}
+# Correlation plot
+res <- d[ ,c('homedamage', 'destroyed', 'roofdamage', 'autodamage', 'emergencyneeds', 'foodneed',
+             'flooddamage', 'waterlevel', 'ihpamount', 'haamount', 'onaamount', 'personalpropertyamount',
+             'roofdamageamount', 'replacementamount','rpfvl', 'ppfvl')]
+
+corr_p <- ggcorrplot(cor(res), lab = TRUE, type = 'lower',
+  outline.col = 'white', ggtheme = theme_gray,
+  colors = c('#6D9EC1', 'white', '#E46726')) +
+  ggtitle('Correlations')
+
+corr_p
+```
+
+```{r, fig.width=16, fig.height=4}
+# Relevel factors
+d$grossincome <- factor(d$grossincome, levels = c('<$15,000', '$15,000-$30,000', '$30,001-$60,000',
+                                                 '$60,001-$120,000', '$120,001-$175,000', '>$175,000'))
+
+# Income boxplot
+income_p <- ggplot(d, aes(grossincome, ihpamount)) +
+              geom_boxplot(aes(fill = grossincome)) + 
+              labs(title = 'Income and IHP Amount',
+                   x = 'Gross income', y = 'IHP amount')
+
+# Residence boxplot
+residence_p <- ggplot(d, aes(residencetype, ihpamount)) +
+                geom_boxplot(aes(fill = residencetype)) + 
+                labs(title = 'Residence and IHP Amount',
+                     x = 'Residence type', y = 'IHP amount')
+
+# Arrange plots
+grid.arrange(income_p, residence_p, ncol=2)
+```
+
+
+```{r}
+# For those inspected, who had insurance?
+(d_inspected <- d[inspnreturned == 1, .(count = .N,
+                                      homeownersinsurance = mean(homeownersinsurance),
+                                      floodinsurance = mean(floodinsurance))])
+```
+
+
+```{r}
+# Inspected but not insured
+d_uninsured <- d[(inspnreturned == 1 & (homeownersinsurance == 0 & floodinsurance == 0)),
+                 c('inspnreturned', 'homeownersinsurance', 'floodinsurance')]
+
+# Uniinsured summary
+uninsured_agg <- d_uninsured[ , .(count = .N,
+                                   inspnreturned = mean(inspnreturned),
+                                   homeownersinsurance = mean(homeownersinsurance),
+                                   floodinsurance = mean(floodinsurance))]
+
+# Percentage without insurance that were inspected
+paste0('Percentage without insurance that were inspected: ', round(100*uninsured_agg$count/d_inspected$count, 1), '%')
+```
+
+## Understanding Payment Amounts
+
+```{r}
+# Calculate total FEMA assistance received - DUPLICATE PAYMENTS CAPTURED!  
+# Incude: ihpamount, haamount, onaamount, fipamount, flooddamageamount, foundationdamageamount, replacementamount, roofdamageamount
+# Excluded: rentalassistanceamount 
+d[ , `:=` (totalamount = ihpamount + haamount + onaamount + fipamount + flooddamageamount +
+                         foundationdamageamount + replacementamount + roofdamageamount,
+           pendingneed = rpfvl - totalamount)]
+
+# HA status
+d_county <- d[ , .(count = .N,
+            totalamount = sum(totalamount),
+            rpfvl = sum(rpfvl),
+            pendingneed = sum(pendingneed)), keyby=county]
+
+d_county
+```
+
+```{r}
+# Does IHP = HA + ONA?  Yes.
+d[ , `:=` (totalamount = haamount + onaamount,
+           check = totalamount - ihpamount)]
+
+# HA status
+d_check <- d[ , .(count = .N,
+                  ihpamount = sum(ihpamount),
+                  haamount = sum(haamount),
+                  onaamount = sum(onaamount),
+                  check = sum(check)), keyby=county]
+
+d_check
+summary(d_check)
+```
+
+```{r}
+# Pending need - check if IHP rflects all FEMA fund received?
+d[ , `:=` (pendingneed = rpfvl - ihpamount)]
+
+# HA status
+d_pending <- d[ , .(count = .N,
+                    ihpamount = sum(ihpamount),
+                    rpfvl = sum(rpfvl),
+                    pendingneed = sum(pendingneed)), keyby=county]
+
+d_pending
+summary(d_pending)
+```
+
+```{r, message=FALSE}
+# IHP amount and rpfvl
+ggplot(d_pending, aes(ihpamount, rpfvl)) +
+  geom_point() +
+  geom_abline(color = 'blue') +
+  labs(title = 'Pending Need - IHP and rpfvl',
+       x = 'IHP amount ($)',
+       y = 'Real property damages ($)')
+```
+
+
+```{r}
+#inspnIssued
+#scatter plot ihp amount rvpfl
+#mean ihp rvpfl gap
+#mean ihp amount by city
+#declaration date
+```
+
+# Linking County Populations
+
+```{r}
+# Read in population data
+d_pop <- fread(file = './zipcode_populations.csv')
+
+# Pending need
+d[ , `:=` (pendingneed = rpfvl - ihpamount)]
+
+# Left join data
+d_full <- merge(x = d, y = d_pop, by = 'zipcode', all.x = TRUE)
+
+# Rename and reformat variables
+setnames(d_full, old = 'county.x', new = 'county')
+#d_full[ , `:=` (zipcode = paste0('00', as.character(zipcode)))]
+
+# HA status
+d_zipcode <- d_full[ , .(count = .N,
+                         ihpamount = sum(ihpamount),
+                         rpfvl = sum(rpfvl),
+                         pendingneed = sum(pendingneed)), keyby=c('zipcode', 'county')]
+
+d_zipcode
+summary(d_zipcode)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+d_pop
+```
+
+
+
+
+
+
+```{r}
+# Read data
+d_pop <- fread(file = './Puerto Rico Community Survey - Population 5year.csv', skip = 1, encoding = 'UTF-8')
+
+# Reformat column names
+col_names <- names(d_pop)
+col_names <- gsub('!!', '_', col_names)
+col_names <- gsub(' ', '_', col_names)
+names(d_pop) <- col_names
+
+# Convert variables names to lower case
+names(d_pop) <- tolower(names(d_pop))
+
+# Rename variables
+setnames(d_pop, old = c('id', 'geographic_area_name', 'estimate_total_total_population'),
+                 new = c('area_id', 'area_name', 'total_population'))
+
+d_pop[ , `:=` (fips_code = substr(area_id, 10, 15))]
+
+# Keep required fields
+d_pop <- d_pop[ ,c('area_id', 'fips_code', 'area_name', 'total_population')]
+
+d[ , .(count = .N), keyby = county]
+d_pop
+
+# # Write to csv
+# fwrite(results, file = './Q3_model_results.csv')
+```
+
+
