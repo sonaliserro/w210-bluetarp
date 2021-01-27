@@ -1,5 +1,5 @@
 ---
-title: 'County Demographics'
+title: 'Census County Demographics'
 subtitle: 'Census Demographic Master Script'
 author: 'Ross MacLean'
 geometry: margin=1in
@@ -29,7 +29,7 @@ library(GGally)
 library(knitr)
 ```
 
-# Census County Demographics
+# Combine Individual Census Files
 
 ```{r}
 # Column names
@@ -110,7 +110,7 @@ tidy_data <- function(file, county){
   fact_desc <- d$Fact
   
   # Create long dataset
-  d_county <- data.table(county = rep(county_name, length(facts)),
+  d_county <- data.table(county = rep(county_name, length(fact)),
              fact = fact)
   
   names(d) <- c('fact', 'value')
@@ -149,9 +149,10 @@ names(d_wide) <- c('county', fact)
 d_wide <- d_wide %>%
   select(fips_code, everything())
 
-d_wide
+head(d_wide)
 ```
 
+# Reformat Variables
 
 ```{r}
 # Replace redacted values with NA
@@ -235,83 +236,57 @@ d_wide[ , `:=` (pop_percent_change = as.numeric(gsub('%', '', pop_percent_change
                 labor_force_female_percent_age_16yrs = as.numeric(gsub('%', '', labor_force_female_percent_age_16yrs))/100,
                 poverty_percent = as.numeric(gsub('%', '', poverty_percent))/100,
                 employment_percent_change = as.numeric(gsub('%', '', employment_percent_change))/100)]
-```
 
-
-```{r}
 # Write to csv
-fwrite(d_wide, file = '../data/county-demographics.csv')
+# fwrite(d_wide, file = '../data/county-demographics.csv')
+
+head(d_wide)
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Sample Code
-
-# Linking County Populations
+# Create FIPS Lookup
 
 ```{r}
-# Read in population data
-d_pop <- fread(file = './zipcode_populations.csv')
+## Fema counties
+# d_fema <- fread(file = '../data/FEMA-DR-4339-PR.csv')
+# county_base <- d_fema[ , .(count = .N), keyby = county]
+# fwrite(county_base, file = '../data/county-fips-lookup.csv')
 
-# Pending need
-d[ , `:=` (pendingneed = rpfvl - ihpamount)]
+## Proper county names with fips
+# d_pop <- fread(file = '../data/Puerto Rico Community Survey - Population 5year.csv', skip = 1, encoding = 'UTF-8')
 
-# Left join data
-d_full <- merge(x = d, y = d_pop, by = 'zipcode', all.x = TRUE)
+## Reformat column names
+# col_names <- names(d_pop)
+# col_names <- gsub('!!', '_', col_names)
+# col_names <- gsub(' ', '_', col_names)
+# names(d_pop) <- col_names
+#
+## Convert variables names to lower case
+# names(d_pop) <- tolower(names(d_pop))
+# 
+## Rename variables
+# setnames(d_pop, old = c('id', 'geographic_area_name', 'estimate_total_total_population'),
+#                  new = c('area_id', 'area_name', 'total_population'))
+# 
+# d_pop[ , `:=` (fips_code = substr(area_id, 10, 15))]
+#
+## Keep required fields
+# d_pop <- d_pop[ ,c('area_id', 'fips_code', 'area_name', 'total_population')]
+# 
+# fips_lookup <-  d_pop[ , .(count = .N), keyby = c('area_name', 'fips_code')]
 
-# Rename and reformat variables
-setnames(d_full, old = 'county.x', new = 'county')
-#d_full[ , `:=` (zipcode = paste0('00', as.character(zipcode)))]
-
-# HA status
-d_zipcode <- d_full[ , .(count = .N,
-                         ihpamount = sum(ihpamount),
-                         rpfvl = sum(rpfvl),
-                         pendingneed = sum(pendingneed)), keyby=c('zipcode', 'county')]
+## Write to csv
+# fwrite(fips_lookup, file = '../data/fips_lookup.csv')
 ```
-
 
 ```{r}
-# Read data
-d_pop <- fread(file = './Puerto Rico Community Survey - Population 5year.csv', skip = 1, encoding = 'UTF-8')
-
-# Reformat column names
-col_names <- names(d_pop)
-col_names <- gsub('!!', '_', col_names)
-col_names <- gsub(' ', '_', col_names)
-names(d_pop) <- col_names
-
-# Convert variables names to lower case
-names(d_pop) <- tolower(names(d_pop))
-
-# Rename variables
-setnames(d_pop, old = c('id', 'geographic_area_name', 'estimate_total_total_population'),
-                 new = c('area_id', 'area_name', 'total_population'))
-
-d_pop[ , `:=` (fips_code = substr(area_id, 10, 15))]
-
-# Keep required fields
-d_pop <- d_pop[ ,c('area_id', 'fips_code', 'area_name', 'total_population')]
-
-d[ , .(count = .N), keyby = county]
-d_pop
-
-# # Write to csv
-# fwrite(results, file = './Q3_model_results.csv')
+## Above county files combined manually 
+# county_lookup <- fread(file = '../data/county-fips-lookup.csv', encoding = 'UTF-8')
+# county_lookup
 ```
+
+
+
+
 
 
