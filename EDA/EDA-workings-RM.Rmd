@@ -39,27 +39,27 @@ These questions are taken from Question 12 of chapter of the textbook.
 
 ```{r}
 # Read data
-d <- data.frame(fread(file = './FEMA-DR-4339-PR.csv', fill = TRUE))
+d_fema <- data.frame(fread(file = '../data/FEMA-DR-4339-PR.csv', fill = TRUE))
 
 # Convert variables names to lower case
-names(d) <- tolower(names(d))
+names(d_fema) <- tolower(names(d_fema))
 
 # Convert boolean to numeric
-cols <- sapply(d, is.logical)
-d[, cols] <- lapply(d[, cols], as.numeric)
-d <- data.table(d)
+cols <- sapply(d_fema, is.logical)
+d_fema[, cols] <- lapply(d_fema[, cols], as.numeric)
+d_fema <- data.table(d_fema)
 
 # Rename variables
-setnames(d, old = c('damagedcity', 'damagedstateabbreviation', 'damagedzipcode'),
+setnames(d_fema, old = c('damagedcity', 'damagedstateabbreviation', 'damagedzipcode'),
                  new = c('city', 'state', 'zipcode'))
 
-head(d)
+head(d_fema)
 ```
 
 ## High-level Summaries
 
 ```{r}
-summary(d)
+summary(d_fema)
 ```
 
 - IHP referral: 80%
@@ -81,20 +81,20 @@ summary(d)
 - Inspected: 68%
 
 ```{r}
-d[ownrent == 'Owner' , .(count = .N), keyby=c('ownrent', 'hastatus')]
+#d[ownrent == 'Owner' , .(count = .N), keyby=c('ownrent', 'hastatus')]
 ```
 
 ## HA Status Investigation
 
 ```{r, fig.width=10, fig.height=4.5}
 # HA status
-(d_hastatus <- d[ , .(count = .N,
-                      ihpeligible = sum(ihpeligible),
-                      haeligible = sum(haeligible),                  
-                      ihpamount = mean(ihpamount),
-                      haamount = mean(haamount),
-                      onaamount = mean(onaamount),
-                      replacementamount = mean(replacementamount)), keyby=hastatus])
+(d_hastatus <- d_fema[ , .(count = .N,
+                           ihpeligible = sum(ihpeligible),
+                           haeligible = sum(haeligible),                  
+                           ihpamount = mean(ihpamount),
+                           haamount = mean(haamount),
+                           onaamount = mean(onaamount),
+                           replacementamount = mean(replacementamount)), keyby=hastatus])
 
 # Counts - reorder and select top 10
 d_hastatus$hastatus <- factor(d_hastatus$hastatus, levels = d_hastatus$hastatus[order(d_hastatus$count)])
@@ -157,9 +157,9 @@ ggplot(top_n, aes(x=hastatus, y=haamount)) +
 
 ```{r, fig.width=8, fig.height=8}
 # Correlation plot
-res <- d[ ,c('homedamage', 'destroyed', 'roofdamage', 'autodamage', 'emergencyneeds', 'foodneed',
-             'flooddamage', 'waterlevel', 'ihpamount', 'haamount', 'onaamount', 'personalpropertyamount',
-             'roofdamageamount', 'replacementamount','rpfvl', 'ppfvl')]
+res <- d_fema[ ,c('homedamage', 'destroyed', 'roofdamage', 'autodamage', 'emergencyneeds', 'foodneed',
+                  'flooddamage', 'waterlevel', 'ihpamount', 'haamount', 'onaamount', 'personalpropertyamount',
+                  'roofdamageamount', 'replacementamount','rpfvl', 'ppfvl')]
 
 corr_p <- ggcorrplot(cor(res), lab = TRUE, type = 'lower',
   outline.col = 'white', ggtheme = theme_gray,
@@ -171,17 +171,17 @@ corr_p
 
 ```{r, fig.width=16, fig.height=4}
 # Relevel factors
-d$grossincome <- factor(d$grossincome, levels = c('<$15,000', '$15,000-$30,000', '$30,001-$60,000',
+d$grossincome <- factor(d_fema$grossincome, levels = c('<$15,000', '$15,000-$30,000', '$30,001-$60,000',
                                                  '$60,001-$120,000', '$120,001-$175,000', '>$175,000'))
 
 # Income boxplot
-income_p <- ggplot(d, aes(grossincome, ihpamount)) +
+income_p <- ggplot(d_fema, aes(grossincome, ihpamount)) +
               geom_boxplot(aes(fill = grossincome)) + 
               labs(title = 'Income and IHP Amount',
                    x = 'Gross income', y = 'IHP amount')
 
 # Residence boxplot
-residence_p <- ggplot(d, aes(residencetype, ihpamount)) +
+residence_p <- ggplot(d_fema, aes(residencetype, ihpamount)) +
                 geom_boxplot(aes(fill = residencetype)) + 
                 labs(title = 'Residence and IHP Amount',
                      x = 'Residence type', y = 'IHP amount')
@@ -193,16 +193,16 @@ grid.arrange(income_p, residence_p, ncol=2)
 
 ```{r}
 # For those inspected, who had insurance?
-(d_inspected <- d[inspnreturned == 1, .(count = .N,
-                                      homeownersinsurance = mean(homeownersinsurance),
-                                      floodinsurance = mean(floodinsurance))])
+(d_inspected <- d_fema[inspnreturned == 1, .(count = .N,
+                                             homeownersinsurance = mean(homeownersinsurance),
+                                             floodinsurance = mean(floodinsurance))])
 ```
 
 
 ```{r}
 # Inspected but not insured
-d_uninsured <- d[(inspnreturned == 1 & (homeownersinsurance == 0 & floodinsurance == 0)),
-                 c('inspnreturned', 'homeownersinsurance', 'floodinsurance')]
+d_uninsured <- d_fema[(inspnreturned == 1 & (homeownersinsurance == 0 & floodinsurance == 0)),
+                       c('inspnreturned', 'homeownersinsurance', 'floodinsurance')]
 
 # Uniinsured summary
 uninsured_agg <- d_uninsured[ , .(count = .N,
@@ -217,20 +217,20 @@ paste0('Percentage without insurance that were inspected: ', round(100*uninsured
 ## Understanding Payment Amounts
 
 ```{r}
-# Calculate total FEMA assistance received - DUPLICATE PAYMENTS CAPTURED!  
-# Incude: ihpamount, haamount, onaamount, fipamount, flooddamageamount, foundationdamageamount, replacementamount, roofdamageamount
-# Excluded: rentalassistanceamount 
-d[ , `:=` (totalamount = ihpamount + haamount + onaamount + fipamount + flooddamageamount +
-                         foundationdamageamount + replacementamount + roofdamageamount,
-           pendingneed = rpfvl - totalamount)]
-
-# HA status
-d_county <- d[ , .(count = .N,
-            totalamount = sum(totalamount),
-            rpfvl = sum(rpfvl),
-            pendingneed = sum(pendingneed)), keyby=county]
-
-d_county
+## Calculate total FEMA assistance received - DUPLICATE PAYMENTS CAPTURED!  
+## Incude: ihpamount, haamount, onaamount, fipamount, flooddamageamount, foundationdamageamount, replacementamount, roofdamageamount
+## Excluded: rentalassistanceamount 
+# d_fema[ , `:=` (totalamount = ihpamount + haamount + onaamount + fipamount + flooddamageamount +
+#                          foundationdamageamount + replacementamount + roofdamageamount,
+#                 pendingneed = rpfvl - totalamount)]
+# 
+## HA status
+# d_check1 <- d_fema[ , .(count = .N,
+#                         totalamount = sum(totalamount),
+#                         rpfvl = sum(rpfvl),
+#                         pendingneed = sum(pendingneed)), keyby=county]
+# 
+# d_check1
 ```
 
 ```{r}
@@ -239,38 +239,173 @@ d[ , `:=` (totalamount = haamount + onaamount,
            check = totalamount - ihpamount)]
 
 # HA status
-d_check <- d[ , .(count = .N,
-                  ihpamount = sum(ihpamount),
-                  haamount = sum(haamount),
-                  onaamount = sum(onaamount),
-                  check = sum(check)), keyby=county]
+d_check <- d_fema[ , .(count = .N,
+                       ihpamount = sum(ihpamount),
+                       haamount = sum(haamount),
+                       onaamount = sum(onaamount),
+                       check = sum(check)), keyby=county]
 
-d_check
 summary(d_check)
 ```
 
+## FEMA Aggregated by County
+
+
 ```{r}
-# Pending need - check if IHP rflects all FEMA fund received?
-d[ , `:=` (pendingneed = rpfvl - ihpamount)]
-
-# HA status
-d_pending <- d[ , .(count = .N,
-                    ihpamount = sum(ihpamount),
-                    rpfvl = sum(rpfvl),
-                    pendingneed = sum(pendingneed)), keyby=county]
-
-d_pending
-summary(d_pending)
+# Identify numeric variables
+is_num <- unlist(lapply(d_fema, is.numeric))
+head(data.frame(d_fema)[ , is_num])
 ```
 
+
+```{r}
+# Create pending need - check if IHP reflects all FEMA funds received?
+d_fema[ , `:=` (pendingneed = rpfvl - ihpamount)]
+
+# HA status
+d_county <- d_fema[ , .(count = .N,
+                        accessfunctionalneeds = sum(accessfunctionalneeds),
+                        autodamage = sum(autodamage),
+                        destroyed = sum(destroyed),
+                        emergencyneeds = sum(emergencyneeds),
+                        fipamount = sum(fipamount),
+                        flooddamage = sum(flooddamage),
+                        flooddamageamount = sum(flooddamageamount),
+                        floodinsurance = sum(floodinsurance),
+                        foodneed = sum(foodneed),
+                        foundationdamage = sum(foundationdamage),
+                        foundationdamageamount = sum(foundationdamageamount),
+                        haamount = sum(haamount),
+                        haeligible = sum(haeligible),
+                        hamax = sum(hamax),
+                        hareferral = sum(hareferral),
+                        habitabilityrepairsrequired = sum(habitabilityrepairsrequired),
+                        homedamage = sum(homedamage),
+                        homeownersinsurance = sum(homeownersinsurance),
+                        ihpamount = sum(ihpamount),
+                        ihpeligible = sum(ihpeligible),
+                        ihpmax = sum(ihpmax),
+                        ihpreferral = sum(ihpreferral),
+                        inspnissued = sum(inspnissued),
+                        inspnreturned = sum(inspnreturned),
+                        onaamount = sum(onaamount),
+                        onaeligible = sum(onaeligible),
+                        onamax = sum(onamax),
+                        onareferral = sum(onareferral),
+                        personalpropertyamount = sum(personalpropertyamount),
+                        ppfvl = sum(ppfvl),
+                        primaryresidence = sum(primaryresidence),
+                        rentalassistanceamount = sum(rentalassistanceamount),
+                        rentalassistanceeligible = sum(rentalassistanceeligible),
+                        repairamount = sum(repairamount),
+                        repairassistanceeligible = sum(repairassistanceeligible),
+                        replacementamount = sum(replacementamount),
+                        replacementassistanceeligible = sum(replacementassistanceeligible),
+                        roofdamage = sum(roofdamage),
+                        roofdamageamount = sum(roofdamageamount),
+                        rpfvl = sum(rpfvl),
+                        sbaapproved = sum(sbaapproved),
+                        sbaeligible = sum(sbaeligible),
+                        tsacheckedin = sum(tsacheckedin),
+                        tsaeligible = sum(tsaeligible),
+                        utilitiesout = sum(utilitiesout),
+                        waterlevel = sum(waterlevel),
+                        pendingneed = sum(pendingneed)), keyby = county]
+
+head(d_county)
+```
+
+```{r}
+# Read in county data
+d_lookup <- fread(file = '../data/census-county/county-fips-lookup.csv', encoding = 'UTF-8')
+d_demographics <- fread(file = '../data/census-county/county-demographics.csv', encoding = 'UTF-8')
+
+# Left join data
+d_full <- merge(x = d_county, y = d_lookup, by = 'county', all.x = TRUE)
+d_full <- merge(x = d_full, y = d_demographics, by = 'county_name', all.x = TRUE)
+
+# Rename variables and tidy data
+d_full <- d_full[county_name != 'Statewide', !c('fips_code.y')]
+setnames(d_full, old = 'fips_code.x', new = 'fips_code')
+
+# Reorder columns
+d_full <- d_full %>%
+  select(fips_code, everything())
+
+head(d_full)
+```
+
+```{r}
+# Calculate per capita and means
+d_full <- d_full[ , `:=` (ihpamount_capita = ihpamount/pop_estimates_2019,
+                             haamount_capita = haamount/pop_estimates_2019,
+                             onaamount_capita = onaamount/pop_estimates_2019,
+                             rpfvl_capita = rpfvl/pop_estimates_2019,
+                             ppfvl_capita = ppfvl/pop_estimates_2019,
+                             pendingneed_capita = pendingneed/pop_estimates_2019,
+                             ihpeligible_capita = ihpeligible/pop_estimates_2019,
+                             haeligible_capita = haeligible/pop_estimates_2019,
+                             onaeligible_capita = onaeligible/pop_estimates_2019,
+                             inspnreturned_capita = inspnreturned/pop_estimates_2019,
+                             roofdamage_capita = roofdamage/pop_estimates_2019,
+                             roofdamageamount_capita = roofdamageamount/pop_estimates_2019,
+                             waterlevel_mean = waterlevel/pop_estimates_2019)]
+
+## Write to csv
+#fwrite(d_full, file = '../data/FEMA-IHP-county.csv')
+```
+
+
 ```{r, message=FALSE}
-# IHP amount and rpfvl
-ggplot(d_pending, aes(ihpamount, rpfvl)) +
-  geom_point() +
+# IHP amount and rpfvl summed
+ggplot(d_full, aes(ihpamount, rpfvl, size = pop_estimates_2019)) +
+  geom_point(alpha = 0.6) +
   geom_abline(color = 'blue') +
   labs(title = 'Pending Need - IHP and rpfvl',
        x = 'IHP amount ($)',
        y = 'Real property damages ($)')
+
+# IHP amount and rpfvl per capita
+ggplot(d_full, aes(ihpamount_capita, rpfvl_capita, size = pop_estimates_2019)) +
+  geom_point(alpha = 0.6) +
+  geom_abline(color = 'blue') +
+  labs(title = 'Pending Need - IHP and rpfvl',
+       x = 'IHP amount per capita ($)',
+       y = 'Real property damages per capita ($)')
+
+# Pending need and IHP amount
+ggplot(d_full, aes(ihpamount_capita, pendingneed_capita, size = pop_estimates_2019)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = 'dashed', color = 'blue') +
+  labs(title = 'Pending Need with IHP',
+       x = 'IHP amount per capita ($)',
+       y = 'Pending need per capita ($)')
+```
+
+```{r}
+# Pending need and poverty
+ggplot(d_full, aes(poverty_percent, pendingneed_capita, size = pop_estimates_2019)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = lm,  formula = y~x, color = 'blue') +
+  labs(title = 'Pending Need with IHP',
+       x = 'Poverty (%)',
+       y = 'Pending need per capita ($)')
+
+# Pending need and median income
+ggplot(d_full, aes(median_household_income, pendingneed_capita, size = pop_estimates_2019)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = lm,  formula = y~x, color = 'blue') +
+  labs(title = 'Pending Need with Income',
+       x = 'Household income ($)',
+       y = 'Pending need per capita ($)')
+
+# Pending need and roof damaged
+ggplot(d_full, aes(roofdamage_capita, pendingneed_capita, size = pop_estimates_2019)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = lm,  formula = y~x, color = 'blue') +
+  labs(title = 'Pending Need with Income',
+       x = 'Roof damaged',
+       y = 'Pending need per capita ($)')
 ```
 
 
@@ -282,81 +417,5 @@ ggplot(d_pending, aes(ihpamount, rpfvl)) +
 #declaration date
 ```
 
-# Linking County Populations
-
-```{r}
-# Read in population data
-d_pop <- fread(file = './zipcode_populations.csv')
-
-# Pending need
-d[ , `:=` (pendingneed = rpfvl - ihpamount)]
-
-# Left join data
-d_full <- merge(x = d, y = d_pop, by = 'zipcode', all.x = TRUE)
-
-# Rename and reformat variables
-setnames(d_full, old = 'county.x', new = 'county')
-#d_full[ , `:=` (zipcode = paste0('00', as.character(zipcode)))]
-
-# HA status
-d_zipcode <- d_full[ , .(count = .N,
-                         ihpamount = sum(ihpamount),
-                         rpfvl = sum(rpfvl),
-                         pendingneed = sum(pendingneed)), keyby=c('zipcode', 'county')]
-
-d_zipcode
-summary(d_zipcode)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-d_pop
-```
-
-
-
-
-
-
-```{r}
-# Read data
-d_pop <- fread(file = './Puerto Rico Community Survey - Population 5year.csv', skip = 1, encoding = 'UTF-8')
-
-# Reformat column names
-col_names <- names(d_pop)
-col_names <- gsub('!!', '_', col_names)
-col_names <- gsub(' ', '_', col_names)
-names(d_pop) <- col_names
-
-# Convert variables names to lower case
-names(d_pop) <- tolower(names(d_pop))
-
-# Rename variables
-setnames(d_pop, old = c('id', 'geographic_area_name', 'estimate_total_total_population'),
-                 new = c('area_id', 'area_name', 'total_population'))
-
-d_pop[ , `:=` (fips_code = substr(area_id, 10, 15))]
-
-# Keep required fields
-d_pop <- d_pop[ ,c('area_id', 'fips_code', 'area_name', 'total_population')]
-
-d[ , .(count = .N), keyby = county]
-d_pop
-
-# # Write to csv
-# fwrite(results, file = './Q3_model_results.csv')
-```
 
 

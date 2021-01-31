@@ -127,7 +127,7 @@ tidy_data <- function(file, county){
 
 ```{r}
 # Identify all census files
-filenames <- list.files("../data/census/", pattern="*.csv", full.names=TRUE)
+filenames <- list.files("../data/census-county/raw/", pattern="*.csv", full.names=TRUE)
 
 d_full <- tidy_data(filenames[1])
 
@@ -248,12 +248,13 @@ head(d_wide)
 
 ```{r}
 ## Fema counties
-# d_fema <- fread(file = '../data/FEMA-DR-4339-PR.csv')
+# d_fema <- fread(file = '../data/census-county/FEMA-DR-4339-PR.csv')
 # county_base <- d_fema[ , .(count = .N), keyby = county]
-# fwrite(county_base, file = '../data/county-fips-lookup.csv')
+# fwrite(county_base, file = '../data/census-county/county-fips-lookup.csv')
 
 ## Proper county names with fips
-# d_pop <- fread(file = '../data/Puerto Rico Community Survey - Population 5year.csv', skip = 1, encoding = 'UTF-8')
+# d_pop <- fread(file = '../data/census-county/Puerto Rico Community Survey - Population 5year.csv', skip = 1,
+#                       encoding = 'UTF-8')
 
 ## Reformat column names
 # col_names <- names(d_pop)
@@ -276,12 +277,12 @@ head(d_wide)
 # fips_lookup <-  d_pop[ , .(count = .N), keyby = c('area_name', 'fips_code')]
 
 ## Write to csv
-# fwrite(fips_lookup, file = '../data/fips_lookup.csv')
+# fwrite(fips_lookup, file = '../data/census-county/fips_lookup.csv')
 ```
 
 ```{r}
 ## Above county files combined manually 
-# county_lookup <- fread(file = '../data/county-fips-lookup.csv', encoding = 'UTF-8')
+# county_lookup <- fread(file = '../data/census-county/county-fips-lookup.csv', encoding = 'UTF-8')
 # county_lookup
 ```
 
