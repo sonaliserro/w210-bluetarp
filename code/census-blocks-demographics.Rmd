@@ -1,0 +1,378 @@
+---
+title: 'Census Block Groups Demographics'
+subtitle: 'Census Demographic Master Script'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(tidyr)
+library(data.table)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+# Combine Files for Master Block Group Base
+
+```{r}
+# Function which read in data and cleans the file for stacking
+tidy_data <- function(file){
+  
+  # Read data
+  d <- fread(file = file, encoding = 'UTF-8', skip = 1)
+
+  # Select census block group id and name
+  d <- d[ ,c(1,2)]
+  
+  setnames(d, old = c('id', 'Geographic Area Name'), new = c('censusid', 'blockgroupname'))
+  
+  return(d)
+  }
+```
+
+
+```{r}
+# Identify all census files
+filenames <- list.files('../data/census-blocks/raw/', pattern='*.csv', full.names=TRUE)
+
+d_full <- tidy_data(filenames[1])
+
+# Loop through all files except first
+for (file in tail(filenames, -1)) {
+  
+  # Read data and stack
+  d_measure <- tidy_data(file = file)
+  d_full <- rbind(d_full, d_measure)
+}
+
+# Block Group ID
+d_full[ , `:=` (blockid = substr(censusid, 10, 22))]
+
+# Full list of all census block group
+d_full <- d_full[ , .(count = .N), keyby = c('censusid', 'blockid', 'blockgroupname')][ , -c('count')]
+
+d_full
+```
+
+# Join Individual Measures to Blocks
+
+```{r}
+# Function which read in data and cleans for joining
+read_data <- function(file){
+  
+  # Read data and rename
+  d <- fread(file = file, encoding = 'UTF-8', skip = 1)
+  setnames(d, old = c('id', 'Geographic Area Name'), new = c('censusid', 'blockgroupname'))
+  
+  return(d)
+  }
+```
+
+```{r}
+filenames
+```
+
+## Educational Attainment
+
+```{r}
+# Read data
+d_education <-read_data(file = '../data/census-blocks/raw/educational-attainment.csv')
+d_education
+
+# Rename fields
+setnames(d_education, old = c('Estimate!!Total:',
+                              'Estimate!!Total:!!Regular high school diploma',
+                              'Estimate!!Total:!!GED or alternative credential',
+                              "Estimate!!Total:!!Bachelor's degree",
+                              "Estimate!!Total:!!Master's degree",
+                              'Estimate!!Total:!!Professional school degree',
+                              'Estimate!!Total:!!Doctorate degree'),
+                      new = c('total_population_edu',
+                              'high_school_diploma',
+                              'ged_credential',
+                              'bachelors_degree',
+                              'masters_degree',
+                              'professional_degree',
+                              'doctorate_degree'))
+
+# Keep required fields
+d_education <- d_education[ , c('censusid', 'total_population_edu', 'high_school_diploma', 'ged_credential', 'bachelors_degree',
+                                'masters_degree', 'professional_degree', 'doctorate_degree')]
+
+# Calculate rates
+d_education[ , `:=` (high_school_diploma_rate = high_school_diploma/total_population_edu,
+                     ged_credential_rate = ged_credential/total_population_edu,
+                     bachelors_degree_rate = bachelors_degree/total_population_edu,
+                     masters_degree_rate = masters_degree/total_population_edu,
+                     professional_degree_rate = professional_degree/total_population_edu,
+                     doctorate_degree_rate = doctorate_degree/total_population_edu)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_education, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Employment Status
+
+```{r}
+# Read data
+d_employment <-read_data(file = '../data/census-blocks/raw/employment-status.csv')
+d_employment
+
+# Rename fields
+setnames(d_employment, old = c('Estimate!!Total:', 'Estimate!!Total:!!In labor force:',
+                              'Estimate!!Total:!!In labor force:!!Civilian labor force:',
+                              'Estimate!!Total:!!In labor force:!!Civilian labor force:!!Employed',
+                              'Estimate!!Total:!!In labor force:!!Civilian labor force:!!Unemployed',
+                              'Estimate!!Total:!!In labor force:!!Armed Forces',
+                              'Estimate!!Total:!!Not in labor force'),
+                      new = c('total_population_employ',
+                              'labor_force_total',
+                              'civilian_labor_force',
+                              'employed_labor_force',
+                              'unemployed_labor_force',
+                              'armed_forces_labor_force',
+                              'not_labor_force_total'))
+
+# Keep required fields
+d_employment <- d_employment[ , c('censusid', 'total_population_employ', 'labor_force_total', 'civilian_labor_force',
+                                  'employed_labor_force', 'unemployed_labor_force', 'armed_forces_labor_force',
+                                  'not_labor_force_total')]
+
+# Calculate rates
+d_employment[ , `:=` (labor_force_rate = labor_force_total/total_population_employ,
+                      civilian_labor_rate = civilian_labor_force/total_population_employ,
+                      employed_labor_rate = employed_labor_force/total_population_employ,
+                      unemployed_labor_rate = unemployed_labor_force/total_population_employ,
+                      armed_forces_labor_rate = armed_forces_labor_force/total_population_employ,
+                      not_labor_force_rate = not_labor_force_total/total_population_employ)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_employment, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Family Income
+
+```{r}
+# Read data
+d_income <-read_data(file = '../data/census-blocks/raw/family-income.csv')
+d_income
+
+# Rename fields
+setnames(d_income, old = c('Estimate!!Total:',
+                           'Estimate!!Total:!!Less than $10,000',
+                           'Estimate!!Total:!!$10,000 to $14,999',
+                           'Estimate!!Total:!!$15,000 to $19,999',
+                           'Estimate!!Total:!!$20,000 to $24,999',
+                           'Estimate!!Total:!!$25,000 to $29,999',
+                           'Estimate!!Total:!!$30,000 to $34,999',
+                           'Estimate!!Total:!!$35,000 to $39,999',
+                           'Estimate!!Total:!!$40,000 to $44,999',
+                           'Estimate!!Total:!!$45,000 to $49,999',
+                           'Estimate!!Total:!!$50,000 to $59,999',
+                           'Estimate!!Total:!!$60,000 to $74,999',
+                           'Estimate!!Total:!!$75,000 to $99,999',
+                           'Estimate!!Total:!!$100,000 to $124,999',
+                           'Estimate!!Total:!!$125,000 to $149,999',
+                           'Estimate!!Total:!!$150,000 to $199,999',
+                           'Estimate!!Total:!!$200,000 or more'),
+                   new = c('total_population_income',
+                           'income_less_10k',
+                           'income_10k_15k',
+                           'income_15k_20k',
+                           'income_20k_25k',
+                           'income_25k_30k',
+                           'income_30k_35k',
+                           'income_35k_40k',
+                           'income_40k_45k',
+                           'income_45k_50k',
+                           'income_50k_60k',
+                           'income_60k_75k',
+                           'income_75k_100k',
+                           'income_100k_125k',
+                           'income_125k_150k',
+                           'income_150k_200k',
+                           'income_200k_more'))
+
+# Keep required fields
+d_income <- d_income[ , c('censusid', 'total_population_income', 'income_less_10k', 'income_10k_15k', 'income_15k_20k',
+                           'income_20k_25k', 'income_25k_30k', 'income_30k_35k', 'income_35k_40k', 'income_40k_45k',
+                           'income_45k_50k', 'income_50k_60k', 'income_60k_75k', 'income_75k_100k', 'income_100k_125k',
+                           'income_125k_150k', 'income_150k_200k', 'income_200k_more')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_income, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Median Earnings
+
+```{r}
+# Read data
+d_earnings <- read_data(file = '../data/census-blocks/raw/median-earnings.csv')
+d_earnings
+
+# Replace redacted values with NA
+d_earnings[d_earnings == '-'] <- NA
+
+# Rename fields
+setnames(d_earnings, old = c('Estimate!!Median earnings in the past 12 months (in 2019 inflation-adjusted dollars) --!!Total (dollars):',
+'Estimate!!Median earnings in the past 12 months (in 2019 inflation-adjusted dollars) --!!Total (dollars):!!Male --!!Total (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2019 inflation-adjusted dollars) --!!Total (dollars):!!Male --!!Total (dollars)!!Worked full-time, year-round in the past 12 months (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2019 inflation-adjusted dollars) --!!Total (dollars):!!Male --!!Total (dollars)!!Other (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2019 inflation-adjusted dollars) --!!Total (dollars):!!Female --!!Total (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2019 inflation-adjusted dollars) --!!Total (dollars):!!Female --!!Total (dollars)!!Worked full-time, year-round in the past 12 months (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2019 inflation-adjusted dollars) --!!Total (dollars):!!Female --!!Total (dollars)!!Other (dollars)'),
+                     new = c('median_earnings_total',
+                             'median_earnings_male',
+                             'median_earnings_male_fulltime',
+                             'median_earnings_male_other',
+                             'median_earnings_female',
+                             'median_earnings_female_fulltime',
+                             'median_earnings_female_other'))
+
+# Keep required fields
+d_earnings <- d_earnings[ , c('censusid', 'median_earnings_total', 'median_earnings_male', 'median_earnings_male_fulltime',
+                             'median_earnings_male_other', 'median_earnings_female',
+                             'median_earnings_female_fulltime', 'median_earnings_female_other')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_earnings, by = 'censusid', all.x = TRUE)
+d_full
+```
+
+## Poverty Status
+
+```{r}
+# Read data
+d_poverty <-read_data(file = '../data/census-blocks/raw/poverty-status.csv')
+d_poverty
+
+# Rename fields
+setnames(d_poverty, old = c('Estimate!!Total:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Family households:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Family households:!!Married-couple family:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Family households:!!Other family:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Family households:!!Other family:!!Male householder, no spouse present:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Family households:!!Other family:!!Female householder, no spouse present:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Nonfamily households:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Nonfamily households:!!Male householder:',
+'Estimate!!Total:!!Income in the past 12 months below poverty level:!!Nonfamily households:!!Female householder:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Family households:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Family households:!!Married-couple family:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Family households:!!Other family:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Family households:!!Other family:!!Male householder, no spouse present:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Family households:!!Other family:!!Female householder, no spouse present:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Nonfamily households:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Nonfamily households:!!Male householder:',
+'Estimate!!Total:!!Income in the past 12 months at or above poverty level:!!Nonfamily households:!!Female householder:'),
+                    new = c('total_households_poverty',
+                            'below_poverty',
+                            'below_poverty_family',
+                            'below_poverty_family_married',
+                            'below_poverty_family_other',
+                            'below_poverty_family_other_male_no_spouse',
+                            'below_poverty_family_other_female_no_spouse',
+                            'below_poverty_nonfamily',
+                            'below_poverty_nonfamily_male',
+                            'below_poverty_nonfamily_female',
+                            'above_poverty',
+                            'above_poverty_family',
+                            'above_poverty_family_married',
+                            'above_poverty_family_other',
+                            'above_poverty_family_other_male_no_spouse',
+                            'above_poverty_family_other_female_no_spouse',
+                            'above_poverty_nonfamily',
+                            'above_poverty_nonfamily_male',
+                            'above_poverty_nonfamily_female'))
+
+# Keep required fields
+d_poverty <- d_poverty[ , c('censusid', 'total_households_poverty', 'below_poverty', 'below_poverty_family',
+                            'below_poverty_family_married', 'below_poverty_family_other',
+                            'below_poverty_family_other_male_no_spouse', 'below_poverty_family_other_female_no_spouse',
+                            'below_poverty_nonfamily', 'below_poverty_nonfamily_male', 'below_poverty_nonfamily_female',
+                            'above_poverty', 'above_poverty_family', 'above_poverty_family_married',
+                            'above_poverty_family_other', 'above_poverty_family_other_male_no_spouse',
+                            'above_poverty_family_other_female_no_spouse', 'above_poverty_nonfamily',
+                            'above_poverty_nonfamily_male', 'above_poverty_nonfamily_female')]
+
+# Calculate rates
+d_poverty[ , `:=` (below_poverty_rate = below_poverty/total_households_poverty,
+                   below_poverty_family_rate = below_poverty_family/total_households_poverty,
+                   below_poverty_family_married_rate = below_poverty_family_married/total_households_poverty,
+                   below_poverty_family_other_rate = below_poverty_family_other/total_households_poverty,
+                   below_poverty_family_other_male_no_spouse_rate = below_poverty_family_other_male_no_spouse/total_households_poverty,
+                   below_poverty_family_other_female_no_spouse_rate = below_poverty_family_other_female_no_spouse/total_households_poverty,
+                   below_poverty_nonfamily_rate = below_poverty_nonfamily/total_households_poverty,
+                   below_poverty_nonfamily_male_rate = below_poverty_nonfamily_male/total_households_poverty,
+                   below_poverty_nonfamily_female_rate = below_poverty_nonfamily_female/total_households_poverty,
+                   above_poverty_rate = above_poverty/total_households_poverty,
+                   above_poverty_family_rate = above_poverty_family/total_households_poverty,
+                   above_poverty_family_married_rate = above_poverty_family_married/total_households_poverty,
+                   above_poverty_family_other_rate = above_poverty_family_other/total_households_poverty,
+                   above_poverty_family_other_male_no_spouse_rate = above_poverty_family_other_male_no_spouse/total_households_poverty,
+                   above_poverty_family_other_female_no_spouse_rate = above_poverty_family_other_female_no_spouse/total_households_poverty,
+                   above_poverty_nonfamily_rate = above_poverty_nonfamily/total_households_poverty,
+                   above_poverty_nonfamily_male_rate = above_poverty_nonfamily_male/total_households_poverty,
+                   above_poverty_nonfamily_female_rate = above_poverty_nonfamily_female/total_households_poverty)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_poverty, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Public Assistance Income or Food Stamps
+
+```{r}
+# Read data
+d_assistance <-read_data(file = '../data/census-blocks/raw/public-assistance-income.csv')
+d_assistance
+
+# Rename fields
+setnames(d_assistance, old = c('Estimate!!Total:',
+                               'Estimate!!Total:!!With cash public assistance or Food Stamps/SNAP',
+                               'Estimate!!Total:!!No cash public assistance or Food Stamps/SNAP'),
+                       new = c('total_population_assist',
+                               'with_assistance',
+                               'without_assistance'))
+
+# Keep required fields
+d_assistance <- d_assistance[ , c('censusid', 'total_population_assist', 'with_assistance', 'without_assistance')]
+
+
+# Calculate rates
+d_assistance[ , `:=` (with_assistance_rate = with_assistance/total_population_assist,
+                      without_assistance_rate = without_assistance/total_population_assist)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_assistance, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+```{r}
+# Write to csv
+fwrite(d_full, file = '../data/census-blocks/census-blocks-demographics.csv')
+```
+
+
+
