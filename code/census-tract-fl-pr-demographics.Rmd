@@ -1,0 +1,743 @@
+---
+title: 'Census Tract Demographics - Puerto Rico & Florida'
+subtitle: 'Census Demographic Master Script'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(tidyr)
+library(data.table)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+# Combine Files for Master Block Group Base
+
+```{r}
+# Function which read in data and cleans the file for stacking
+tidy_data <- function(file){
+  
+  # Read data
+  d <- fread(file = file, encoding = 'UTF-8', skip = 1)
+
+  # Select census block group id and name
+  d <- d[ ,c(1,2)]
+  
+  setnames(d, old = c('id', 'Geographic Area Name'), new = c('censusid', 'tractname'))
+  
+  return(d)
+  }
+```
+
+
+```{r}
+# Identify all census files
+filenames <- list.files('../data/census-tract-fl-pr/raw/', pattern='*.csv', full.names=TRUE)
+
+d_full <- tidy_data(filenames[1])
+
+# Loop through all files except first
+for (file in tail(filenames, -1)) {
+  
+  # Read data and stack
+  d_measure <- tidy_data(file = file)
+  d_full <- rbind(d_full, d_measure)
+}
+
+# Census Tract ID
+d_full[ , `:=` (tractid = substr(censusid, 10, 22))]
+
+# Full list of all census block group
+d_full <- d_full[ , .(count = .N), keyby = c('censusid', 'tractid', 'tractname')][ , -c('count')]
+
+d_full
+```
+
+# Join Individual Measures to Blocks
+
+```{r}
+# Function which read in data and cleans for joining
+read_data <- function(file){
+  
+  # Read data and rename
+  d <- fread(file = file, encoding = 'UTF-8', skip = 1)
+  setnames(d, old = c('id', 'Geographic Area Name'), new = c('censusid', 'tractname'))
+  
+  return(d)
+  }
+```
+
+```{r}
+filenames
+```
+
+## Educational Attainment
+
+```{r}
+# Read data
+d_education <-read_data(file = '../data/census-tract-fl-pr/raw/educational-attainment.csv')
+d_education
+
+# Rename fields
+setnames(d_education, old = c('Estimate!!Total',
+                              'Estimate!!Total!!Regular high school diploma',
+                              'Estimate!!Total!!GED or alternative credential',
+                              "Estimate!!Total!!Bachelor's degree",
+                              "Estimate!!Total!!Master's degree",
+                              'Estimate!!Total!!Professional school degree',
+                              'Estimate!!Total!!Doctorate degree'),
+                      new = c('total_population_edu',
+                              'high_school_diploma',
+                              'ged_credential',
+                              'bachelors_degree',
+                              'masters_degree',
+                              'professional_degree',
+                              'doctorate_degree'))
+
+# Keep required fields
+d_education <- d_education[ , c('censusid', 'total_population_edu', 'high_school_diploma', 'ged_credential', 'bachelors_degree',
+                                'masters_degree', 'professional_degree', 'doctorate_degree')]
+
+# Calculate rates
+d_education[ , `:=` (high_school_diploma_rate = high_school_diploma/total_population_edu,
+                     ged_credential_rate = ged_credential/total_population_edu,
+                     bachelors_degree_rate = bachelors_degree/total_population_edu,
+                     masters_degree_rate = masters_degree/total_population_edu,
+                     professional_degree_rate = professional_degree/total_population_edu,
+                     doctorate_degree_rate = doctorate_degree/total_population_edu)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_education, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Employment Status
+
+```{r}
+# Read data
+d_employment <-read_data(file = '../data/census-tract-fl-pr/raw/employment-status.csv')
+d_employment
+
+# Rename fields
+setnames(d_employment, old = c('Estimate!!Total',
+                               'Estimate!!Total!!In labor force',
+                               'Estimate!!Total!!In labor force!!Civilian labor force',
+                               'Estimate!!Total!!In labor force!!Civilian labor force!!Employed',
+                               'Estimate!!Total!!In labor force!!Civilian labor force!!Unemployed',
+                               'Estimate!!Total!!In labor force!!Armed Forces',
+                               'Estimate!!Total!!Not in labor force'),
+                      new = c('total_population_employ',
+                              'labor_force_total',
+                              'civilian_labor_force',
+                              'employed_labor_force',
+                              'unemployed_labor_force',
+                              'armed_forces_labor_force',
+                              'not_labor_force_total'))
+
+# Keep required fields
+d_employment <- d_employment[ , c('censusid', 'total_population_employ', 'labor_force_total', 'civilian_labor_force',
+                                  'employed_labor_force', 'unemployed_labor_force', 'armed_forces_labor_force',
+                                  'not_labor_force_total')]
+
+# Calculate rates
+d_employment[ , `:=` (labor_force_rate = labor_force_total/total_population_employ,
+                      civilian_labor_rate = civilian_labor_force/total_population_employ,
+                      employed_labor_rate = employed_labor_force/total_population_employ,
+                      unemployed_labor_rate = unemployed_labor_force/total_population_employ,
+                      armed_forces_labor_rate = armed_forces_labor_force/total_population_employ,
+                      not_labor_force_rate = not_labor_force_total/total_population_employ)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_employment, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Family Income
+
+```{r}
+# Read data
+d_income <-read_data(file = '../data/census-tract-fl-pr/raw/family-income.csv')
+d_income
+
+# Rename fields
+setnames(d_income, old = c('Estimate!!Total',
+                           'Estimate!!Total!!Less than $10,000',
+                           'Estimate!!Total!!$10,000 to $14,999',
+                           'Estimate!!Total!!$15,000 to $19,999',
+                           'Estimate!!Total!!$20,000 to $24,999',
+                           'Estimate!!Total!!$25,000 to $29,999',
+                           'Estimate!!Total!!$30,000 to $34,999',
+                           'Estimate!!Total!!$35,000 to $39,999',
+                           'Estimate!!Total!!$40,000 to $44,999',
+                           'Estimate!!Total!!$45,000 to $49,999',
+                           'Estimate!!Total!!$50,000 to $59,999',
+                           'Estimate!!Total!!$60,000 to $74,999',
+                           'Estimate!!Total!!$75,000 to $99,999',
+                           'Estimate!!Total!!$100,000 to $124,999',
+                           'Estimate!!Total!!$125,000 to $149,999',
+                           'Estimate!!Total!!$150,000 to $199,999',
+                           'Estimate!!Total!!$200,000 or more'),
+                   new = c('total_population_income',
+                           'income_less_10k',
+                           'income_10k_15k',
+                           'income_15k_20k',
+                           'income_20k_25k',
+                           'income_25k_30k',
+                           'income_30k_35k',
+                           'income_35k_40k',
+                           'income_40k_45k',
+                           'income_45k_50k',
+                           'income_50k_60k',
+                           'income_60k_75k',
+                           'income_75k_100k',
+                           'income_100k_125k',
+                           'income_125k_150k',
+                           'income_150k_200k',
+                           'income_200k_more'))
+
+# Keep required fields
+d_income <- d_income[ , c('censusid', 'total_population_income', 'income_less_10k', 'income_10k_15k', 'income_15k_20k',
+                           'income_20k_25k', 'income_25k_30k', 'income_30k_35k', 'income_35k_40k', 'income_40k_45k',
+                           'income_45k_50k', 'income_50k_60k', 'income_60k_75k', 'income_75k_100k', 'income_100k_125k',
+                           'income_125k_150k', 'income_150k_200k', 'income_200k_more')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_income, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Median Earnings
+
+```{r}
+# Read data
+d_earnings <- read_data(file = '../data/census-tract-fl-pr/raw/median-earnings.csv')
+d_earnings
+
+# Replace redacted values with NA
+d_earnings[d_earnings == '-'] <- NA
+
+# Rename fields
+setnames(d_earnings, old = c('Estimate!!Median earnings in the past 12 months (in 2017 inflation-adjusted dollars) --!!Total (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2017 inflation-adjusted dollars) --!!Male --!!Total (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2017 inflation-adjusted dollars) --!!Male --!!Worked full-time, year-round in the past 12 months (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2017 inflation-adjusted dollars) --!!Male --!!Other (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2017 inflation-adjusted dollars) --!!Female --!!Total (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2017 inflation-adjusted dollars) --!!Female --!!Worked full-time, year-round in the past 12 months (dollars)',
+'Estimate!!Median earnings in the past 12 months (in 2017 inflation-adjusted dollars) --!!Female --!!Other (dollars)'),
+                     new = c('median_earnings_total',
+                             'median_earnings_male',
+                             'median_earnings_male_fulltime',
+                             'median_earnings_male_other',
+                             'median_earnings_female',
+                             'median_earnings_female_fulltime',
+                             'median_earnings_female_other'))
+
+# Keep required fields
+d_earnings <- d_earnings[ , c('censusid', 'median_earnings_total', 'median_earnings_male', 'median_earnings_male_fulltime',
+                             'median_earnings_male_other', 'median_earnings_female',
+                             'median_earnings_female_fulltime', 'median_earnings_female_other')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_earnings, by = 'censusid', all.x = TRUE)
+d_full
+```
+
+## Poverty Status
+
+```{r}
+# Read data
+d_poverty <-read_data(file = '../data/census-tract-fl-pr/raw/poverty-status.csv')
+d_poverty
+
+# Rename fields
+setnames(d_poverty, old = c('Estimate!!Total',
+'Estimate!!Total!!Income in the past 12 months below poverty level',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Family households',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Family households!!Married-couple family',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Family households!!Other family',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Family households!!Other family!!Male householder, no wife present',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Family households!!Other family!!Female householder, no husband present',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Nonfamily households',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Nonfamily households!!Male householder',
+'Estimate!!Total!!Income in the past 12 months below poverty level!!Nonfamily households!!Female householder',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Family households',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Family households!!Married-couple family',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Family households!!Other family',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Family households!!Other family!!Male householder, no wife present',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Family households!!Other family!!Female householder, no husband present',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Nonfamily households',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Nonfamily households!!Male householder',
+'Estimate!!Total!!Income in the past 12 months at or above poverty level!!Nonfamily households!!Female householder'),
+                    new = c('total_households_poverty',
+                            'below_poverty',
+                            'below_poverty_family',
+                            'below_poverty_family_married',
+                            'below_poverty_family_other',
+                            'below_poverty_family_other_male_no_spouse',
+                            'below_poverty_family_other_female_no_spouse',
+                            'below_poverty_nonfamily',
+                            'below_poverty_nonfamily_male',
+                            'below_poverty_nonfamily_female',
+                            'above_poverty',
+                            'above_poverty_family',
+                            'above_poverty_family_married',
+                            'above_poverty_family_other',
+                            'above_poverty_family_other_male_no_spouse',
+                            'above_poverty_family_other_female_no_spouse',
+                            'above_poverty_nonfamily',
+                            'above_poverty_nonfamily_male',
+                            'above_poverty_nonfamily_female'))
+
+# Keep required fields
+d_poverty <- d_poverty[ , c('censusid', 'total_households_poverty', 'below_poverty', 'below_poverty_family',
+                            'below_poverty_family_married', 'below_poverty_family_other',
+                            'below_poverty_family_other_male_no_spouse', 'below_poverty_family_other_female_no_spouse',
+                            'below_poverty_nonfamily', 'below_poverty_nonfamily_male', 'below_poverty_nonfamily_female',
+                            'above_poverty', 'above_poverty_family', 'above_poverty_family_married',
+                            'above_poverty_family_other', 'above_poverty_family_other_male_no_spouse',
+                            'above_poverty_family_other_female_no_spouse', 'above_poverty_nonfamily',
+                            'above_poverty_nonfamily_male', 'above_poverty_nonfamily_female')]
+
+# Calculate rates
+d_poverty[ , `:=` (below_poverty_rate = below_poverty/total_households_poverty,
+                   below_poverty_family_rate = below_poverty_family/total_households_poverty,
+                   below_poverty_family_married_rate = below_poverty_family_married/total_households_poverty,
+                   below_poverty_family_other_rate = below_poverty_family_other/total_households_poverty,
+                   below_poverty_family_other_male_no_spouse_rate = below_poverty_family_other_male_no_spouse/total_households_poverty,
+                   below_poverty_family_other_female_no_spouse_rate = below_poverty_family_other_female_no_spouse/total_households_poverty,
+                   below_poverty_nonfamily_rate = below_poverty_nonfamily/total_households_poverty,
+                   below_poverty_nonfamily_male_rate = below_poverty_nonfamily_male/total_households_poverty,
+                   below_poverty_nonfamily_female_rate = below_poverty_nonfamily_female/total_households_poverty,
+                   above_poverty_rate = above_poverty/total_households_poverty,
+                   above_poverty_family_rate = above_poverty_family/total_households_poverty,
+                   above_poverty_family_married_rate = above_poverty_family_married/total_households_poverty,
+                   above_poverty_family_other_rate = above_poverty_family_other/total_households_poverty,
+                   above_poverty_family_other_male_no_spouse_rate = above_poverty_family_other_male_no_spouse/total_households_poverty,
+                   above_poverty_family_other_female_no_spouse_rate = above_poverty_family_other_female_no_spouse/total_households_poverty,
+                   above_poverty_nonfamily_rate = above_poverty_nonfamily/total_households_poverty,
+                   above_poverty_nonfamily_male_rate = above_poverty_nonfamily_male/total_households_poverty,
+                   above_poverty_nonfamily_female_rate = above_poverty_nonfamily_female/total_households_poverty)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_poverty, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Public Assistance Income or Food Stamps
+
+```{r}
+# Read data
+d_assistance <-read_data(file = '../data/census-tract-fl-pr/raw/public-assistance.csv')
+d_assistance
+
+# Rename fields
+setnames(d_assistance, old = c('Estimate!!Total',
+                               'Estimate!!Total!!With cash public assistance or Food Stamps/SNAP',
+                               'Estimate!!Total!!No cash public assistance or Food Stamps/SNAP'),
+                       new = c('total_population_assist',
+                               'with_assistance',
+                               'without_assistance'))
+
+# Keep required fields
+d_assistance <- d_assistance[ , c('censusid', 'total_population_assist', 'with_assistance', 'without_assistance')]
+
+
+# Calculate rates
+d_assistance[ , `:=` (with_assistance_rate = with_assistance/total_population_assist,
+                      without_assistance_rate = without_assistance/total_population_assist)]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_assistance, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+## Housing Units
+
+```{r}
+# Read data
+d_housing <- read_data(file = '../data/census-tract-fl-pr/raw/housing-characteristics.csv')
+d_housing
+
+# Replace redacted values with NA
+d_housing[d_housing == '(X)'] <- NA
+
+# Rename fields
+setnames(d_housing, old = c('Estimate!!HOUSING OCCUPANCY!!Total housing units',
+'Percent Estimate!!HOUSING OCCUPANCY!!Total housing units',
+'Estimate!!HOUSING OCCUPANCY!!Total housing units!!Occupied housing units',
+'Percent Estimate!!HOUSING OCCUPANCY!!Total housing units!!Occupied housing units',
+'Estimate!!HOUSING OCCUPANCY!!Total housing units!!Vacant housing units',
+'Percent Estimate!!HOUSING OCCUPANCY!!Total housing units!!Vacant housing units',
+'Estimate!!HOUSING OCCUPANCY!!Total housing units!!Homeowner vacancy rate',
+'Percent Estimate!!HOUSING OCCUPANCY!!Total housing units!!Homeowner vacancy rate',
+'Estimate!!HOUSING OCCUPANCY!!Total housing units!!Rental vacancy rate',
+'Percent Estimate!!HOUSING OCCUPANCY!!Total housing units!!Rental vacancy rate',
+'Estimate!!HOUSING TENURE!!Occupied housing units',
+'Percent Estimate!!HOUSING TENURE!!Occupied housing units',
+'Estimate!!HOUSING TENURE!!Occupied housing units!!Owner-occupied',
+'Percent Estimate!!HOUSING TENURE!!Occupied housing units!!Owner-occupied',
+'Estimate!!HOUSING TENURE!!Occupied housing units!!Renter-occupied',
+'Percent Estimate!!HOUSING TENURE!!Occupied housing units!!Renter-occupied',
+'Estimate!!HOUSING TENURE!!Occupied housing units!!Average household size of owner-occupied unit',
+'Percent Estimate!!HOUSING TENURE!!Occupied housing units!!Average household size of owner-occupied unit',
+'Estimate!!HOUSING TENURE!!Occupied housing units!!Average household size of renter-occupied unit',
+'Percent Estimate!!HOUSING TENURE!!Occupied housing units!!Average household size of renter-occupied unit',
+'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2015 or later',
+'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2015 or later',
+'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2010 to 2014',
+'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2010 to 2014',
+'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2000 to 2009',
+'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2000 to 2009',
+'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 1990 to 1999',
+'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 1990 to 1999',
+'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 1980 to 1989',
+'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 1980 to 1989',
+'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 1979 and earlier',
+'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 1979 and earlier',
+'Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!Lacking complete plumbing facilities',
+'Percent Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!Lacking complete plumbing facilities',
+'Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!Lacking complete kitchen facilities',
+'Percent Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!Lacking complete kitchen facilities',
+'Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!No telephone service available',
+'Percent Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!No telephone service available',
+'Estimate!!VALUE!!Owner-occupied units!!Less than $50 000',
+'Percent Estimate!!VALUE!!Owner-occupied units!!Less than $50 000',
+'Estimate!!VALUE!!Owner-occupied units!!$50 000 to $99 999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$50 000 to $99 999',
+'Estimate!!VALUE!!Owner-occupied units!!$100 000 to $149 999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$100 000 to $149 999',
+'Estimate!!VALUE!!Owner-occupied units!!$150 000 to $199 999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$150 000 to $199 999',
+'Estimate!!VALUE!!Owner-occupied units!!$200 000 to $299 999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$200 000 to $299 999',
+'Estimate!!VALUE!!Owner-occupied units!!$300 000 to $499 999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$300 000 to $499 999',
+'Estimate!!VALUE!!Owner-occupied units!!$500 000 to $999 999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$500 000 to $999 999',
+'Estimate!!VALUE!!Owner-occupied units!!$1 000 000 or more',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$1 000 000 or more',
+'Estimate!!VALUE!!Owner-occupied units!!Median (dollars)',
+'Percent Estimate!!VALUE!!Owner-occupied units!!Median (dollars)',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!Less than 20.0 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!Less than 20.0 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!20.0 to 24.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!20.0 to 24.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!25.0 to 29.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!25.0 to 29.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!30.0 to 34.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!30.0 to 34.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!35.0 percent or more',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!35.0 percent or more',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!Not computed',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)!!Not computed',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!Less than 10.0 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!Less than 10.0 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!10.0 to 14.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!10.0 to 14.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!15.0 to 19.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!15.0 to 19.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!20.0 to 24.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!20.0 to 24.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!25.0 to 29.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!25.0 to 29.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!30.0 to 34.9 percent',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!30.0 to 34.9 percent',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!35.0 percent or more',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!35.0 percent or more',
+'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!Not computed',
+'Percent Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing unit without a mortgage (excluding units where SMOCAPI cannot be computed)!!Not computed',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!Less than 15.0 percent',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!Less than 15.0 percent',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!15.0 to 19.9 percent',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!15.0 to 19.9 percent',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!20.0 to 24.9 percent',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!20.0 to 24.9 percent',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!25.0 to 29.9 percent',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!25.0 to 29.9 percent',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!30.0 to 34.9 percent',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!30.0 to 34.9 percent',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!35.0 percent or more',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!35.0 percent or more',
+'Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!Not computed',
+'Percent Estimate!!GROSS RENT AS A PERCENTAGE OF HOUSEHOLD INCOME (GRAPI)!!Occupied units paying rent (excluding units where GRAPI cannot be computed)!!Not computed'),
+                       new = c('total_housing_units',
+                              'total_housing_units_rate',
+                              'occupied_housing_units',
+                              'occupied_housing_units_rate',
+                              'vacant_housing_units',
+                              'vacant_housing_units_rate',
+                              'homeowner_vacancy_rate',
+                              'homeowner_vacancy_rate_rate',
+                              'rental_vacancy_rate',
+                              'rental_vacancy_rate_rate',
+                              'tenure_occupied_housing_units',
+                              'tenure_occupied_housing_units_rate',
+                              'owner_occupied',
+                              'owner_occupied_rate',
+                              'renter_occupied',
+                              'renter_occupied_rate',
+                              'avg_size_owner_unit',
+                              'avg_size_owner_unit_rate',
+                              'avg_size_renter_unit',
+                              'avg_size_of_renter__unit_rate',
+                              'moved_in_2015_or_later',
+                              'moved_in_2015_or_later_rate',
+                              'moved_in_2010_to_2014',
+                              'moved_in_2010_to_2014_rate',
+                              'moved_in_2000_to_2009',
+                              'moved_in_2000_to_2009_rate',
+                              'moved_in_1990_to_1999',
+                              'moved_in_1990_to_1999_rate',
+                              'moved_in_1980_to_1989',
+                              'moved_in_1980_to_1989_rate',
+                              'moved_in_1979_and_earlier',
+                              'moved_in_1979_and_earlier_rate',
+                              'lacking_complete_plumbing_facilities',
+                              'lacking_complete_plumbing_facilities_rate',
+                              'lacking_complete_kitchen_facilities',
+                              'lacking_complete_kitchen_facilities_rate',
+                              'no_telephone_service_available',
+                              'no_telephone_service_available_rate',
+                              'value_less_50k',
+                              'value_less_50k_rate',
+                              'value_50k_100k',
+                              'value_50k_100k_rate',
+                              'value_100k_150k',
+                              'value_100k_150k_rate',
+                              'value_150k_200k',
+                              'value_150k_200k_rate',
+                              'value_200k_300k',
+                              'value_200k_300k_rate',
+                              'value_300k_500k',
+                              'value_300k_500k_rate',
+                              'value_500k_1M',
+                              'value_500k_1M_rate',
+                              '1M_more',
+                              '1M_more_rate',
+                              'median_value',
+                              'median_value_rate',
+                              'mortgage',
+                              'mortgage_rate',
+                              'mortgage_less_20_percent',
+                              'mortgage_less_20_percent_rate',
+                              'mortgage_20_25_percent',
+                              'mortgage_20_25_percent_rate',
+                              'mortgage_25_30_percent',
+                              'mortgage_25_30_percent_rate',
+                              'mortgage_30_35_percent',
+                              'mortgage_30_35_percent_rate',
+                              'mortgage_35_percent_plus',
+                              'mortgage_35_percent_plus_rate',
+                              'mortgage_not_computed',
+                              'mortgage_not_computed_rate',
+                              'without_mortgage',
+                              'without_mortgage_rate',
+                              'without_mortgage_less_10_percent',
+                              'without_mortgage_less_10_percent_rate',
+                              'without_mortgage_10_15_percent',
+                              'without_mortgage_10_15_percent_rate',
+                              'without_mortgage_15_20_percent',
+                              'without_mortgage_15_20_percent_rate',
+                              'without_mortgage_20_25_percent',
+                              'without_mortgage_20_25_percent_rate',
+                              'without_mortgage_25_30_percent',
+                              'without_mortgage_25_30_percent_rate',
+                              'without_mortgage_30_35_percent',
+                              'without_mortgage_30_35_percent_rate',
+                              'without_mortgage_35_percent_plus',
+                              'without_mortgage_35_percent_plus_rate',
+                              'without_mortgage_not_computed',
+                              'without_mortgage_not_computed_rate',
+                              'occupied_units_paying_rent',
+                              'occupied_units_paying_rent_rate',
+                              'rent_less_15_percent',
+                              'rent_less_15_percent_rate',
+                              'rent_15_20_percent',
+                              'rent_15_20_percent_rate',
+                              'rent_20_25_percent',
+                              'rent_20_25_percent_rate',
+                              'rent_25_30_percent',
+                              'rent_25_30_percent_rate',
+                              'rent_30_35_percent',
+                              'rent_30_35_percent_rate',
+                              'rent_35_percent_plus',
+                              'rent_35_percent_plus_rate',
+                              'rent_not_computed',
+                              'rent_not_computed_rate'))
+  
+# Keep required fields
+d_housing <- d_housing[ , c('censusid', 'total_housing_units',
+                              'total_housing_units_rate',
+                              'occupied_housing_units',
+                              'occupied_housing_units_rate',
+                              'vacant_housing_units',
+                              'vacant_housing_units_rate',
+                              'homeowner_vacancy_rate',
+                              'homeowner_vacancy_rate_rate',
+                              'rental_vacancy_rate',
+                              'rental_vacancy_rate_rate',
+                              'tenure_occupied_housing_units',
+                              'tenure_occupied_housing_units_rate',
+                              'owner_occupied',
+                              'owner_occupied_rate',
+                              'renter_occupied',
+                              'renter_occupied_rate',
+                              'avg_size_owner_unit',
+                              'avg_size_owner_unit_rate',
+                              'avg_size_renter_unit',
+                              'avg_size_of_renter__unit_rate',
+                              'moved_in_2015_or_later',
+                              'moved_in_2015_or_later_rate',
+                              'moved_in_2010_to_2014',
+                              'moved_in_2010_to_2014_rate',
+                              'moved_in_2000_to_2009',
+                              'moved_in_2000_to_2009_rate',
+                              'moved_in_1990_to_1999',
+                              'moved_in_1990_to_1999_rate',
+                              'moved_in_1980_to_1989',
+                              'moved_in_1980_to_1989_rate',
+                              'moved_in_1979_and_earlier',
+                              'moved_in_1979_and_earlier_rate',
+                              'lacking_complete_plumbing_facilities',
+                              'lacking_complete_plumbing_facilities_rate',
+                              'lacking_complete_kitchen_facilities',
+                              'lacking_complete_kitchen_facilities_rate',
+                              'no_telephone_service_available',
+                              'no_telephone_service_available_rate',
+                              'value_less_50k',
+                              'value_less_50k_rate',
+                              'value_50k_100k',
+                              'value_50k_100k_rate',
+                              'value_100k_150k',
+                              'value_100k_150k_rate',
+                              'value_150k_200k',
+                              'value_150k_200k_rate',
+                              'value_200k_300k',
+                              'value_200k_300k_rate',
+                              'value_300k_500k',
+                              'value_300k_500k_rate',
+                              'value_500k_1M',
+                              'value_500k_1M_rate',
+                              '1M_more',
+                              '1M_more_rate',
+                              'median_value',
+                              'median_value_rate',
+                              'mortgage',
+                              'mortgage_rate',
+                              'mortgage_less_20_percent',
+                              'mortgage_less_20_percent_rate',
+                              'mortgage_20_25_percent',
+                              'mortgage_20_25_percent_rate',
+                              'mortgage_25_30_percent',
+                              'mortgage_25_30_percent_rate',
+                              'mortgage_30_35_percent',
+                              'mortgage_30_35_percent_rate',
+                              'mortgage_35_percent_plus',
+                              'mortgage_35_percent_plus_rate',
+                              'mortgage_not_computed',
+                              'mortgage_not_computed_rate',
+                              'without_mortgage',
+                              'without_mortgage_rate',
+                              'without_mortgage_less_10_percent',
+                              'without_mortgage_less_10_percent_rate',
+                              'without_mortgage_10_15_percent',
+                              'without_mortgage_10_15_percent_rate',
+                              'without_mortgage_15_20_percent',
+                              'without_mortgage_15_20_percent_rate',
+                              'without_mortgage_20_25_percent',
+                              'without_mortgage_20_25_percent_rate',
+                              'without_mortgage_25_30_percent',
+                              'without_mortgage_25_30_percent_rate',
+                              'without_mortgage_30_35_percent',
+                              'without_mortgage_30_35_percent_rate',
+                              'without_mortgage_35_percent_plus',
+                              'without_mortgage_35_percent_plus_rate',
+                              'without_mortgage_not_computed',
+                              'without_mortgage_not_computed_rate',
+                              'occupied_units_paying_rent',
+                              'occupied_units_paying_rent_rate',
+                              'rent_less_15_percent',
+                              'rent_less_15_percent_rate',
+                              'rent_15_20_percent',
+                              'rent_15_20_percent_rate',
+                              'rent_20_25_percent',
+                              'rent_20_25_percent_rate',
+                              'rent_25_30_percent',
+                              'rent_25_30_percent_rate',
+                              'rent_30_35_percent',
+                              'rent_30_35_percent_rate',
+                              'rent_35_percent_plus',
+                              'rent_35_percent_plus_rate',
+                              'rent_not_computed',
+                              'rent_not_computed_rate')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_housing, by = 'censusid', all.x = TRUE)
+tail(d_full)
+```
+
+
+## GIS Coordinates for Tracts (Latitude/Longitude)
+
+```{r}
+# Read data
+d_gis <- fread(file = '../data/census-tract-shapefile/nhgis-tract-2017.csv')
+d_gis
+
+# Convert variables names to lower case
+names(d_gis) <- tolower(names(d_gis))
+
+# Create tract id
+d_gis[ , `:=` (tractid = paste0(substr(gisjoin, 2, 3), substr(gisjoin, 5, 7), substr(gisjoin, 9, 14)))]
+
+# Keep specific variables
+d_gis <- d_gis[ , c('gisjoin', 'tractid', 'county', 'state')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_gis, by = 'tractid', all.x = TRUE)
+
+# Reorder variables
+d_full <- d_full %>%
+  select(state, everything()) %>%
+  select(county, everything()) %>%
+  select(tractname, everything()) %>%
+  select(tractid, everything()) %>%
+  select(gisjoin, everything()) %>%
+  select(censusid, everything())
+
+tail(d_full)
+```
+
+
+
+
+```{r}
+# Write to csv
+fwrite(d_full, file = '../data/census-tract-fl-pr/census-tract-fl-pr-demographics.csv')
+```
+
