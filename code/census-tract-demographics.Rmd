@@ -1,5 +1,5 @@
 ---
-title: 'Census Tract Demographics'
+title: 'Census Tract Demographics - Puerto Rico'
 subtitle: 'Census Demographic Master Script'
 author: 'Ross MacLean'
 geometry: margin=1in
@@ -62,7 +62,7 @@ for (file in tail(filenames, -1)) {
   d_full <- rbind(d_full, d_measure)
 }
 
-# Block Group ID
+# Census Tract ID
 d_full[ , `:=` (tractid = substr(censusid, 10, 22))]
 
 # Full list of all census block group
@@ -702,6 +702,36 @@ head(d_full)
 ```
 
 
+## GIS Coordinates for Tracts (Latitude/Longitude)
+
+```{r}
+# Read data
+d_gis <- fread(file = '../data/census-tract-shapefile/nhgis-tract-2017.csv')
+d_gis
+
+# Convert variables names to lower case
+names(d_gis) <- tolower(names(d_gis))
+
+# Create tract id
+d_gis[ , `:=` (tractid = paste0(substr(gisjoin, 2, 3), substr(gisjoin, 5, 7), substr(gisjoin, 9, 14)))]
+
+# Keep specific variables
+d_gis <- d_gis[ , c('gisjoin', 'tractid', 'county', 'state')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_gis, by = 'tractid', all.x = TRUE)
+
+# Reorder variables
+d_full <- d_full %>%
+  select(state, everything()) %>%
+  select(county, everything()) %>%
+  select(tractname, everything()) %>%
+  select(tractid, everything()) %>%
+  select(gisjoin, everything()) %>%
+  select(censusid, everything())
+
+tail(d_full)
+```
 
 ```{r}
 # Write to csv
