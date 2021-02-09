@@ -89,6 +89,29 @@ read_data <- function(file){
 filenames
 ```
 
+## Populations
+
+```{r}
+# Read data
+d_population <-read_data(file = '../data/census-tract-fl-pr/raw/population.csv')
+d_population
+
+# Rename fields
+setnames(d_population, old = c('Estimate!!Total!!Total population',
+                               'Estimate!!Male!!Total population',
+                               'Estimate!!Female!!Total population'),
+                       new = c('total_population',
+                               'male_population',
+                               'female_population'))
+
+# Keep required fields
+d_population <- d_population[ , c('censusid', 'total_population', 'male_population', 'female_population')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_population, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
 ## Educational Attainment
 
 ```{r}
@@ -706,7 +729,7 @@ tail(d_full)
 
 ```{r}
 # Read data
-d_gis <- fread(file = '../data/census-tract-shapefile/nhgis-tract-2017.csv')
+d_gis <- fread(file = '../data/census-tract-shapefile/nhgis-tract-2017.csv', encoding = 'UTF-8')
 d_gis
 
 # Convert variables names to lower case
@@ -733,11 +756,8 @@ d_full <- d_full %>%
 tail(d_full)
 ```
 
-
-
-
 ```{r}
 # Write to csv
-fwrite(d_full, file = '../data/census-tract-fl-pr/census-tract-fl-pr-demographics.csv')
+fwrite(d_full, file = '../data/census-tract-fl-pr/census-tract-fl-pr-demographics2.csv')
 ```
 

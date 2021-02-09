@@ -89,6 +89,30 @@ read_data <- function(file){
 filenames
 ```
 
+## Populations
+
+```{r}
+# Read data
+d_population <-read_data(file = '../data/census-tract/raw/population.csv')
+d_population
+
+# Rename fields
+setnames(d_population, old = c('Estimate!!Total!!Total population',
+                               'Estimate!!Male!!Total population',
+                               'Estimate!!Female!!Total population'),
+                       new = c('total_population',
+                               'male_population',
+                               'female_population'))
+
+# Keep required fields
+d_population <- d_population[ , c('censusid', 'total_population', 'male_population', 'female_population')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_population, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+
 ## Educational Attainment
 
 ```{r}
