@@ -758,6 +758,6 @@ tail(d_full)
 
 ```{r}
 # Write to csv
-fwrite(d_full, file = '../data/census-tract-fl-pr/census-tract-fl-pr-demographics2.csv')
+fwrite(d_full, file = '../data/census-tract-fl-pr/census-tract-fl-pr-demographics.csv')
 ```
 
