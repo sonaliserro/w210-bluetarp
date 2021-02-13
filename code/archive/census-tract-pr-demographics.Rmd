@@ -1,5 +1,5 @@
 ---
-title: 'Census Tract Demographics - Florida, Puerto Rico, Texas'
+title: 'Census Tract Demographics - Puerto Rico'
 subtitle: 'Census Demographic Master Script'
 author: 'Ross MacLean'
 geometry: margin=1in
@@ -68,8 +68,7 @@ d_full[ , `:=` (tractid = substr(censusid, 10, 22))]
 # Full list of all census block group
 d_full <- d_full[ , .(count = .N), keyby = c('censusid', 'tractid', 'tractname')][ , -c('count')]
 
-head(d_full)
-print(filenames)
+d_full
 ```
 
 # Join Individual Measures to Blocks
@@ -86,6 +85,9 @@ read_data <- function(file){
   }
 ```
 
+```{r}
+filenames
+```
 
 ## Populations
 
@@ -110,7 +112,8 @@ d_full <- merge(x = d_full, y = d_population, by = 'censusid', all.x = TRUE)
 head(d_full)
 ```
 
-## Educational Attainment (25-yrs plus)
+
+## Educational Attainment
 
 ```{r}
 # Read data
@@ -118,26 +121,32 @@ d_education <-read_data(file = '../data/census-tract/raw/educational-attainment.
 d_education
 
 # Rename fields
-setnames(d_education, old = c('Estimate!!Total!!Population 25 years and over',
-                              'Estimate!!Total!!Population 25 years and over!!High school graduate (includes equivalency)',
-                              "Estimate!!Total!!Population 25 years and over!!Bachelor's degree",
-                              "Estimate!!Total!!Population 25 years and over!!Graduate or professional degree",
-                              "Estimate!!Percent!!Population 25 years and over!!Percent bachelor's degree or higher"),
+setnames(d_education, old = c('Estimate!!Total',
+                              'Estimate!!Total!!Regular high school diploma',
+                              'Estimate!!Total!!GED or alternative credential',
+                              "Estimate!!Total!!Bachelor's degree",
+                              "Estimate!!Total!!Master's degree",
+                              'Estimate!!Total!!Professional school degree',
+                              'Estimate!!Total!!Doctorate degree'),
                       new = c('total_population_edu',
-                              'high_school_grad',
+                              'high_school_diploma',
+                              'ged_credential',
                               'bachelors_degree',
-                              'graduate_prof_degree',
-                              'bachelors_plus_degree_rate'))
+                              'masters_degree',
+                              'professional_degree',
+                              'doctorate_degree'))
 
 # Keep required fields
-d_education <- d_education[ , c('censusid', 'total_population_edu', 'high_school_grad', 'bachelors_degree',
-                                'graduate_prof_degree')]
+d_education <- d_education[ , c('censusid', 'total_population_edu', 'high_school_diploma', 'ged_credential', 'bachelors_degree',
+                                'masters_degree', 'professional_degree', 'doctorate_degree')]
 
 # Calculate rates
-d_education[ , `:=` (high_school_grad_rate = high_school_grad/total_population_edu,
+d_education[ , `:=` (high_school_diploma_rate = high_school_diploma/total_population_edu,
+                     ged_credential_rate = ged_credential/total_population_edu,
                      bachelors_degree_rate = bachelors_degree/total_population_edu,
-                     graduate_prof_degree_rate = graduate_prof_degree/total_population_edu,
-                     bachelors_plus_degree_rate = (bachelors_degree + graduate_prof_degree)/total_population_edu)]
+                     masters_degree_rate = masters_degree/total_population_edu,
+                     professional_degree_rate = professional_degree/total_population_edu,
+                     doctorate_degree_rate = doctorate_degree/total_population_edu)]
 
 # Left join to full data
 d_full <- merge(x = d_full, y = d_education, by = 'censusid', all.x = TRUE)
@@ -184,7 +193,6 @@ d_employment[ , `:=` (labor_force_rate = labor_force_total/total_population_empl
 d_full <- merge(x = d_full, y = d_employment, by = 'censusid', all.x = TRUE)
 head(d_full)
 ```
-
 
 ## Family Income
 
@@ -714,7 +722,7 @@ d_housing <- d_housing[ , c('censusid', 'total_housing_units',
 
 # Left join to full data
 d_full <- merge(x = d_full, y = d_housing, by = 'censusid', all.x = TRUE)
-tail(d_full)
+head(d_full)
 ```
 
 
@@ -722,7 +730,7 @@ tail(d_full)
 
 ```{r}
 # Read data
-d_gis <- fread(file = '../data/census-tract-shapefile/nhgis-tract-2017.csv', encoding = 'UTF-8')
+d_gis <- fread(file = '../data/census-tract-shapefile/nhgis-tract-2017.csv')
 d_gis
 
 # Convert variables names to lower case
