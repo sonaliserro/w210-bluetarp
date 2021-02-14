@@ -1,0 +1,224 @@
+---
+title: 'FEMA Large Disasters with Demographics by Census Tract'
+subtitle: 'Florida, Puerto Rico and Texas'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+# 1. Exploratory Data Analysis
+
+These questions are taken from Question 12 of chapter of the textbook.
+
+
+```{r}
+# Read data and stack
+d_texas <- fread(file = '../data/open-fema/FEMA-Large-DR-4332-TX.csv', fill = TRUE, encoding = 'UTF-8')
+d_puerto <- fread(file = '../data/open-fema/FEMA-Large-DR-4339-PR.csv', fill = TRUE, encoding = 'UTF-8')
+d_florida <- fread(file = '../data/open-fema/FEMA-Large-DR-4337-FL.csv', fill = TRUE, encoding = 'UTF-8')
+d_fema <- rbind(d_texas, d_puerto, d_florida)
+
+# Convert variables names to lower case
+names(d_fema) <- tolower(names(d_fema))
+
+nrow(d_fema)
+
+# Main disaster by state
+d_fema[ , .(count = .N), keyby = c('damagedstateabbreviation', 'disasternumber')][count > 1000]
+```
+
+```{r}
+# FEMA vaiables with missing values
+na_counts <- round(head(sort(colSums(is.na(d_fema)), decreasing = TRUE), 13)*100 / nrow(d_fema), 1)
+
+# Parse cols and vals for table
+cols <- names(na_counts)
+vals <- na_counts[cols]
+
+# Create tables
+data.table(variable = cols,
+           missing_rate = vals)
+```
+
+## Creating variables and reformatting
+
+```{r}
+# Census tract id
+d_fema[ , `:=` (tractid = substr(censusblockid, 1, 11))]
+
+# Replace NAs for all numbers that are not not codes/categorical
+num_code_vars <- c('disasternumber', 'damagedzipcode', 'censusblockid', 'censusyear', 'id', 'tractid')
+
+d_fema <- d_fema %>% mutate_at(vars(-c(num_code_vars)), ~replace(., is.na(.), 0))
+```
+
+
+```{r}
+# Calculate HA program amounts
+d_fema[ , `:=` (haamount = rentalassistanceamount + repairamount + replacementamount)]
+d_fema[ , `:=` (assistancegap = haamount - rpfvl)]
+
+## Categorical values for encoding as dummies
+#d_fema[ , .(count = .N), keyby = ownrent]
+#d_fema[ , .(count = .N), keyby = residencetype]
+
+# Ownrent binary flags - manual one hot encoding
+d_fema[ , `:=` (ownrent_owner = ifelse(ownrent == 'Owner', 1, 0),
+                ownrent_renter = ifelse(ownrent == 'Renter', 1, 0),
+                ownrent_unknown = ifelse(ownrent == 'Unknown', 1, 0))]
+
+# Residence type binary flags - manual one hot encoding
+d_fema[ , `:=` (residencetype_apartment = ifelse(residencetype == 'Apartment', 1, 0),
+                residencetype_condo = ifelse(residencetype == 'Condo', 1, 0),
+                residencetype_houseduplex = ifelse(residencetype == 'House/Duplex', 1, 0),
+                residencetype_mobilehome = ifelse(residencetype == 'Mobile Home', 1, 0),
+                residencetype_townhouse = ifelse(residencetype == 'Townhouse', 1, 0),
+                residencetype_other = ifelse(residencetype != 'Apartment' &
+                                             residencetype != 'Condo' &
+                                             residencetype != 'House/Duplex' &
+                                             residencetype != 'Mobile Home' &
+                                             residencetype != 'Townhouse', 1, 0))]
+
+head(d_fema)
+```
+
+
+## Aggregate FEMA to Tracts
+
+```{r warning=FALSE}
+# Aggregate to Census tract level
+d_fematract <- d_fema[ , .(grossincome = as.numeric(mean(grossincome)),
+                           householdcomposition = as.numeric(mean(householdcomposition)),
+                           specialneeds = sum(specialneeds),
+                           homeownersinsurance = sum(homeownersinsurance),
+                           floodinsurance = sum(floodinsurance),
+                           inspected = as.numeric(sum(inspected)),
+                           rpfvl = sum(rpfvl),
+                           habitabilityrepairsrequired = sum(habitabilityrepairsrequired),
+                           destroyed = sum(destroyed),
+                           waterlevel = as.numeric(mean(waterlevel)),
+                           flooddamage = sum(flooddamage),
+                           foundationdamage = sum(foundationdamage),
+                           roofdamage = sum(roofdamage),
+                           roofdamageamount = sum(roofdamageamount),
+                           tsaeligible = sum(tsaeligible),
+                           tsacheckedin = sum(tsacheckedin),
+                           rentalassistanceeligible = sum(rentalassistanceeligible),
+                           rentalassistanceamount = sum(rentalassistanceamount),
+                           repairassistanceeligible = sum(repairassistanceeligible),
+                           repairamount = sum(repairamount),
+                           replacementassistanceeligible = sum(replacementassistanceeligible),
+                           replacementamount = sum(replacementamount),
+                           sbaeligible = sum(sbaeligible),
+                           primaryresidence = sum(primaryresidence),
+                           personalpropertyeligible = sum(personalpropertyeligible),
+                           ppfvl = sum(ppfvl), 
+                           haamount = sum(haamount),
+                           assistancegap = sum(assistancegap),
+                           ownrent_owner = sum(ownrent_owner),
+                           ownrent_renter = sum(ownrent_renter),
+                           ownrent_unknown = sum(ownrent_unknown),
+                           residencetype_apartment = sum(residencetype_apartment),
+                           residencetype_condo = sum(residencetype_condo),
+                           residencetype_houseduplex = sum(residencetype_houseduplex),
+                           residencetype_mobilehome = sum(residencetype_mobilehome),
+                           residencetype_townhouse = sum(residencetype_townhouse),
+                           residencetype_other = sum(residencetype_other)), keyby = c('damagedstateabbreviation', 'tractid')]
+
+head(d_fematract)
+```
+
+## Join with Census Tract Demographics
+
+```{r}
+# Read census data
+d_census <- fread(file = '../data/census-tract/census-tract-demographics.csv', fill = TRUE, encoding = 'UTF-8')
+
+# Convert tract id to charmacter
+d_census[ , `:=` (tractid = as.character(as.character(tractid)))]
+
+# Joins
+d_full <- d_census[ , c('tractid', 'tractname')]
+
+# Census tract from FEMA/Census
+census_tracts <- d_census[ , .(count = .N), keyby = c('tractid')][ , !c('count')]
+fema_tracts <- d_fematract[ , .(count = .N), keyby = c('tractid')][ , !c('count')]
+
+# Full listing of tracts
+d_full <- rbind(census_tracts, fema_tracts)
+d_full <- d_full[ , .(count = .N), keyby = c('tractid')][ , !c('count')]
+
+# Joins FEMA/Census data
+d_full <- merge(x = d_full, y = d_fematract, by = 'tractid', all.x = TRUE)
+d_full <- merge(x = d_full, y = d_census, by = 'tractid', all.x = TRUE)
+d_full
+```
+
+## Calculate Rates
+
+```{r}
+# Calculate per capita and means
+d_full[ , `:=` (haamount_capita = haamount/total_population,
+                rentalassistanceamount_capita = rentalassistanceamount/total_population,
+                repairamount_capita = repairamount/total_population,
+                replacementamount_capita = replacementamount/total_population,
+                roofdamageamount_capita = roofdamageamount/total_population,
+                rpfvl_capita = rpfvl/total_population,
+                ppfvl_capita = ppfvl/total_population,
+                inspected_capita = inspected/total_population,
+                destroyed_capita = destroyed/total_population,
+                flooddamage_capita = flooddamage/total_population,
+                roofdamage_capita = roofdamage/total_population,
+                tsaeligible_capita = tsaeligible/total_population,
+                tsacheckedin_capita = tsacheckedin/total_population,
+                rentalassistanceeligible_capita = rentalassistanceeligible/total_population,
+                repairassistanceeligible_capita = repairassistanceeligible/total_population,
+                replacementassistanceeligible_capita = replacementassistanceeligible/total_population,
+                sbaeligible_capita = sbaeligible/total_population,
+                primaryresidence_capita = primaryresidence/total_population,
+                personalpropertyeligible_capita = personalpropertyeligible/total_population,
+                habitabilityrepairsrequired_capita = habitabilityrepairsrequired/total_population,
+                assistancegap_capita = assistancegap/total_population,
+                ownrent_owner_capita = ownrent_owner/total_population,
+                ownrent_renter_capita = ownrent_renter/total_population,
+                ownrent_unknown_capita = ownrent_unknown/total_population,
+                residencetype_apartment_capita = residencetype_apartment/total_population,
+                residencetype_condo_capita = residencetype_condo/total_population,
+                residencetype_houseduplex_capita = residencetype_houseduplex/total_population,
+                residencetype_mobilehome_capita = residencetype_mobilehome/total_population,
+                residencetype_townhouse_capita = residencetype_townhouse/total_population,
+                residencetype_other_capita = residencetype_other/total_population)]
+
+d_full
+```
+
+
+```{r}
+# Write to csv  
+fwrite(d_full, file = '../data/census-tract/FEMA-large-demographic-tract.csv')
+```
+
+
+
+
