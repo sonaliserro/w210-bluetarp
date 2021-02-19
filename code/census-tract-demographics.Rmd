@@ -407,6 +407,28 @@ setnames(d_housing, old = c('Estimate!!HOUSING OCCUPANCY!!Total housing units',
 'Percent Estimate!!HOUSING OCCUPANCY!!Total housing units!!Homeowner vacancy rate',
 'Estimate!!HOUSING OCCUPANCY!!Total housing units!!Rental vacancy rate',
 'Percent Estimate!!HOUSING OCCUPANCY!!Total housing units!!Rental vacancy rate',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 2014 or later',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 2014 or later',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 2010 to 2013',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 2010 to 2013',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 2000 to 2009',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 2000 to 2009',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1990 to 1999',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1990 to 1999',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1980 to 1989',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1980 to 1989',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1970 to 1979',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1970 to 1979',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1960 to 1969',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1960 to 1969',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1950 to 1959',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1950 to 1959',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1940 to 1949',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1940 to 1949',
+'Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1939 or earlier',
+'Percent Estimate!!YEAR STRUCTURE BUILT!!Total housing units!!Built 1939 or earlier',
 'Estimate!!HOUSING TENURE!!Occupied housing units',
 'Percent Estimate!!HOUSING TENURE!!Occupied housing units',
 'Estimate!!HOUSING TENURE!!Occupied housing units!!Owner-occupied',
@@ -417,6 +439,8 @@ setnames(d_housing, old = c('Estimate!!HOUSING OCCUPANCY!!Total housing units',
 'Percent Estimate!!HOUSING TENURE!!Occupied housing units!!Average household size of owner-occupied unit',
 'Estimate!!HOUSING TENURE!!Occupied housing units!!Average household size of renter-occupied unit',
 'Percent Estimate!!HOUSING TENURE!!Occupied housing units!!Average household size of renter-occupied unit',
+'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units',
+'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units',
 'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2015 or later',
 'Percent Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2015 or later',
 'Estimate!!YEAR HOUSEHOLDER MOVED INTO UNIT!!Occupied housing units!!Moved in 2010 to 2014',
@@ -511,6 +535,28 @@ setnames(d_housing, old = c('Estimate!!HOUSING OCCUPANCY!!Total housing units',
                               'homeowner_vacancy_rate_rate',
                               'rental_vacancy_rate',
                               'rental_vacancy_rate_rate',
+                              'built_total_housing_units',
+                              'built_total_housing_units_rate',
+                              'built_2014_or_later',
+                              'built_2014_or_later_rate',
+                              'built_2010_to_2013',
+                              'built_2010_to_2013_rate',
+                              'built_2000_to_2009',
+                              'built_2000_to_2009_rate',
+                              'built_1990_to_1999',
+                              'built_1990_to_1999_rate',
+                              'built_1980_to_1989',
+                              'built_1980_to_1989_rate',
+                              'built_1970_to_1979',
+                              'built_1970_to_1979_rate',
+                              'built_1960_to_1969',
+                              'built_1960_to_1969_rate',
+                              'built_1950_to_1959',
+                              'built_1950_to_1959_rate',
+                              'built_1940_to_1949',
+                              'built_1940_to_1949_rate',
+                              'built_1939_or_earlier',
+                              'built_1939_or_earlier_rate',
                               'tenure_occupied_housing_units',
                               'tenure_occupied_housing_units_rate',
                               'owner_occupied',
@@ -521,6 +567,8 @@ setnames(d_housing, old = c('Estimate!!HOUSING OCCUPANCY!!Total housing units',
                               'avg_size_owner_unit_rate',
                               'avg_size_renter_unit',
                               'avg_size_of_renter__unit_rate',
+                              'moved_occupied_housing_unit',
+                              'moved_occupied_housing_unit_rate',
                               'moved_in_2015_or_later',
                               'moved_in_2015_or_later_rate',
                               'moved_in_2010_to_2014',
@@ -553,8 +601,8 @@ setnames(d_housing, old = c('Estimate!!HOUSING OCCUPANCY!!Total housing units',
                               'value_300k_500k_rate',
                               'value_500k_1M',
                               'value_500k_1M_rate',
-                              '1M_more',
-                              '1M_more_rate',
+                              'value_1M_more',
+                              'value_1M_more_rate',
                               'median_value',
                               'median_value_rate',
                               'mortgage',
@@ -617,6 +665,28 @@ d_housing <- d_housing[ , c('censusid', 'total_housing_units',
                               'homeowner_vacancy_rate_rate',
                               'rental_vacancy_rate',
                               'rental_vacancy_rate_rate',
+                              'built_total_housing_units',
+                              'built_total_housing_units_rate',
+                              'built_2014_or_later',
+                              'built_2014_or_later_rate',
+                              'built_2010_to_2013',
+                              'built_2010_to_2013_rate',
+                              'built_2000_to_2009',
+                              'built_2000_to_2009_rate',
+                              'built_1990_to_1999',
+                              'built_1990_to_1999_rate',
+                              'built_1980_to_1989',
+                              'built_1980_to_1989_rate',
+                              'built_1970_to_1979',
+                              'built_1970_to_1979_rate',
+                              'built_1960_to_1969',
+                              'built_1960_to_1969_rate',
+                              'built_1950_to_1959',
+                              'built_1950_to_1959_rate',
+                              'built_1940_to_1949',
+                              'built_1940_to_1949_rate',
+                              'built_1939_or_earlier',
+                              'built_1939_or_earlier_rate',
                               'tenure_occupied_housing_units',
                               'tenure_occupied_housing_units_rate',
                               'owner_occupied',
@@ -627,6 +697,8 @@ d_housing <- d_housing[ , c('censusid', 'total_housing_units',
                               'avg_size_owner_unit_rate',
                               'avg_size_renter_unit',
                               'avg_size_of_renter__unit_rate',
+                              'moved_occupied_housing_unit',
+                              'moved_occupied_housing_unit_rate',
                               'moved_in_2015_or_later',
                               'moved_in_2015_or_later_rate',
                               'moved_in_2010_to_2014',
@@ -659,8 +731,8 @@ d_housing <- d_housing[ , c('censusid', 'total_housing_units',
                               'value_300k_500k_rate',
                               'value_500k_1M',
                               'value_500k_1M_rate',
-                              '1M_more',
-                              '1M_more_rate',
+                              'value_1M_more',
+                              'value_1M_more_rate',
                               'median_value',
                               'median_value_rate',
                               'mortgage',
@@ -717,6 +789,77 @@ d_full <- merge(x = d_full, y = d_housing, by = 'censusid', all.x = TRUE)
 tail(d_full)
 ```
 
+
+## Race in United States
+
+```{r}
+# Read data
+d_race_us <-read_data(file = '../data/census-tract/raw/race-us.csv')
+d_race_us
+
+# Rename fields
+setnames(d_race_us, old = c('Estimate!!Total!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Native; born in state of residence!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Native; born in other state in the U.S.!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Native; born outside U.S.!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Total!!Total population!!White alone, not Hispanic or Latino',
+                            'Estimate!!Native; born in state of residence!!Total population!!White alone, not Hispanic or Latino',
+                            'Estimate!!Native; born in other state in the U.S.!!Total population!!White alone, not Hispanic or Latino',
+                            'Estimate!!Native; born outside U.S.!!Total population!!White alone, not Hispanic or Latino'),
+                      new = c('us_total_hispanic_rate',
+                              'in_state_hispanic_rate',
+                              'out_state_hispanic_rate',
+                              'outside_us_hispanic_rate',
+                              'total_white_rate',
+                              'in_state_white_rate',
+                              'out_state_white_rate',
+                              'outside_us_white_rate'))
+
+# Keep required fields
+d_race_us <- d_race_us[ , c('censusid', 'us_total_hispanic_rate', 'in_state_hispanic_rate', 'out_state_hispanic_rate',
+                            'outside_us_hispanic_rate', 'total_white_rate', 'in_state_white_rate',
+                            'out_state_white_rate', 'outside_us_white_rate')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_race_us, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
+
+
+## Race in Puerto Rico
+
+```{r}
+# Read data
+d_race_pr <-read_data(file = '../data/census-tract/raw/race-pr.csv')
+d_race_pr
+
+# Rename fields
+setnames(d_race_pr, old = c('Estimate!!Total!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Native; born in Puerto Rico!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Native; born in the U.S.!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!Hispanic or Latino origin (of any race)',
+                            'Estimate!!Total!!Total population!!White alone, not Hispanic or Latino',
+                            'Estimate!!Native; born in Puerto Rico!!Total population!!White alone, not Hispanic or Latino',
+                            'Estimate!!Native; born in the U.S.!!Total population!!White alone, not Hispanic or Latino',
+                            'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!White alone, not Hispanic or Latino'),
+                      new = c('pr_total_hispanic_rate',
+                              'pr_born_in_hispanic_rate',
+                              'pr_born_us_hispanic_rate',
+                              'pr_born_outside_hispanic_rate',
+                              'pr_total_white_rate',
+                              'pr_born_in_white_rate',
+                              'pr_born_us_white_rate',
+                              'pr_born_outside_white_rate'))
+
+# Keep required fields
+d_race_pr <- d_race_pr[ , c('censusid', 'pr_total_hispanic_rate', 'pr_born_in_hispanic_rate', 'pr_born_us_hispanic_rate',
+                              'pr_born_outside_hispanic_rate', 'pr_total_white_rate', 'pr_born_in_white_rate',
+                              'pr_born_us_white_rate', 'pr_born_outside_white_rate')]
+
+# Left join to full data
+d_full <- merge(x = d_full, y = d_race_pr, by = 'censusid', all.x = TRUE)
+head(d_full)
+```
 
 ## GIS Coordinates for Tracts (Latitude/Longitude)
 
