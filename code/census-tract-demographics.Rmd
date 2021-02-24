@@ -82,17 +82,17 @@ read_data <- function(file){
   d <- fread(file = file, encoding = 'UTF-8', skip = 1)
   setnames(d, old = c('id', 'Geographic Area Name'), new = c('censusid', 'tractname'))
   
-# Replace redacted values with NA
-d[d == '**'] <- NA      # margin - no sample observations or too few sample observations were available.  Stats test not good
-d[d == '-'] <- NA       # estimate - no sample observations or too few sample observations were available.  
-d[d == '***'] <- NA     # margin - median falls in the lowest interval or upper interval of an open-ended distribution.  Stats test not good.
-d[d == '*****'] <- NA   # margin - the estimate is controlled. A statistical test for sampling variability is not appropriate.
-d[d == 'N'] <- NA       # both - data for this geographic area cannot be displayed because the number of sample cases is too small.
-d[d == '(X)'] <- NA     # estimate - not applicable or not available.
-
-# Not sure how to handle these cases
-#  d[d == '-'] <- NA       # median estimate - the median falls in the lowest interval of an open-ended distribution.
-#  d[d == '+'] <- NA       # median estimate - the median falls in the upper interval of an open-ended distribution.
+  # Replace redacted values with NA
+  d[d == '**'] <- NA      # margin - no sample observations or too few sample observations were available.  Stats test not good
+  d[d == '-'] <- NA       # estimate - no sample observations or too few sample observations were available.  
+  d[d == '***'] <- NA     # margin - median falls in the lowest interval or upper interval of an open-ended distribution.  Stats test not good.
+  d[d == '*****'] <- NA   # margin - the estimate is controlled. A statistical test for sampling variability is not appropriate.
+  d[d == 'N'] <- NA       # both - data for this geographic area cannot be displayed because the number of sample cases is too small.
+  d[d == '(X)'] <- NA     # estimate - not applicable or not available.
+  
+  # Not sure how to handle these cases
+  #  d[d == '-'] <- NA       # median estimate - the median falls in the lowest interval of an open-ended distribution.
+  #  d[d == '+'] <- NA       # median estimate - the median falls in the upper interval of an open-ended distribution.
 
   return(d)
   }
@@ -790,10 +790,25 @@ d_housing <- d_housing[ , c('censusid', 'total_housing_units',
                               'rent_not_computed',
                               'rent_not_computed_rate')]
 
+
+# Three built year ranges
+d_housing[ , `:=` (built_1959_or_earlier_rate = (built_1939_or_earlier + built_1940_to_1949 + built_1950_to_1959)/built_total_housing_units,
+    built_1960_to_1989_rate = (built_1960_to_1969 + built_1970_to_1979 + built_1980_to_1989)/built_total_housing_units,
+    built_1990_or_later_rate = (built_1990_to_1999 + built_2000_to_2009 + built_2010_to_2013 + built_2014_or_later)/built_total_housing_units)]
+
+# Two built year ranges
+d_housing[ , `:=` (built_1979_or_earlier_rate = (built_1939_or_earlier + built_1940_to_1949 + built_1950_to_1959 + built_1960_to_1969 + built_1970_to_1979)/built_total_housing_units,
+                   built_1980_or_later_rate = (built_1980_to_1989 + built_1990_to_1999 + built_2000_to_2009 + built_2010_to_2013 + built_2014_or_later)/built_total_housing_units)]
+
+# Convert percentages to proportions
+d_housing[ ,`:=` (owner_occupied_rate = owner_occupied/tenure_occupied_housing_units,
+                  renter_occupied_rate = renter_occupied/tenure_occupied_housing_units)]
+                  
 # Left join to full data
 d_full <- merge(x = d_full, y = d_housing, by = 'censusid', all.x = TRUE)
 tail(d_full)
 ```
+
 
 
 ## Race in United States
@@ -916,6 +931,48 @@ d_race_us <- d_race_us[ , c('censusid',
                             'us_out_state_other_rate',
                             'us_outside_other_rate')]
 
+# Convert to numeric
+d_race_us[ , `:=` (us_total_hispanic_rate = as.numeric(us_total_hispanic_rate),
+                   us_in_state_hispanic_rate = as.numeric(us_in_state_hispanic_rate),
+                   us_out_state_hispanic_rate = as.numeric(us_out_state_hispanic_rate),
+                   us_outside_hispanic_rate = as.numeric(us_outside_hispanic_rate),
+                   us_total_white_alone_rate = as.numeric(us_total_white_alone_rate),
+                   us_in_state_white_alone_rate = as.numeric(us_in_state_white_alone_rate),
+                   us_out_state_white_alone_rate = as.numeric(us_out_state_white_alone_rate),
+                   us_outside_white_alone_rate = as.numeric(us_outside_white_alone_rate),
+                   us_total_race_rate = as.numeric(us_total_race_rate),
+                   us_in_state_race_rate = as.numeric(us_in_state_race_rate),
+                   us_out_state_race_rate = as.numeric(us_out_state_race_rate),
+                   us_outside_race_rate = as.numeric(us_outside_race_rate),
+                   us_total_white_rate = as.numeric(us_total_white_rate),
+                   us_in_state_white_rate = as.numeric(us_in_state_white_rate),
+                   us_out_state_white_rate = as.numeric(us_out_state_white_rate),
+                   us_outside_white_rate = as.numeric(us_outside_white_rate),
+                   us_total_black_rate = as.numeric(us_total_black_rate),
+                   us_in_state_black_rate = as.numeric(us_in_state_black_rate),
+                   us_out_state_black_rate = as.numeric(us_out_state_black_rate),
+                   us_outside_black_rate = as.numeric(us_outside_black_rate),
+                   us_total_american_indian_rate = as.numeric(us_total_american_indian_rate),
+                   us_in_state_american_indian_rate = as.numeric(us_in_state_american_indian_rate),
+                   us_out_state_american_indian_rate = as.numeric(us_out_state_american_indian_rate),
+                   us_outside_american_indian_rate = as.numeric(us_outside_american_indian_rate),
+                   us_total_asian_rate = as.numeric(us_total_asian_rate),
+                   us_in_state_asian_rate = as.numeric(us_in_state_asian_rate),
+                   us_out_state_asian_rate = as.numeric(us_out_state_asian_rate),
+                   us_outside_asian_rate = as.numeric(us_outside_asian_rate),
+                   us_total_native_hawaiian_rate = as.numeric(us_total_native_hawaiian_rate),
+                   us_in_state_native_hawaiian_rate = as.numeric(us_in_state_native_hawaiian_rate),
+                   us_out_state_native_hawaiian_rate = as.numeric(us_out_state_native_hawaiian_rate),
+                   us_outside_native_hawaiian_rate = as.numeric(us_outside_native_hawaiian_rate),
+                   us_total_other_rate = as.numeric(us_total_other_rate),
+                   us_in_state_other_rate = as.numeric(us_in_state_other_rate),
+                   us_out_state_other_rate = as.numeric(us_out_state_other_rate),
+                   us_outside_other_rate = as.numeric(us_outside_other_rate))]
+
+# Create certain groups
+d_race_us[ , `:=` (us_total_other_rate = us_total_american_indian_rate + us_total_asian_rate + us_total_native_hawaiian_rate + us_total_other_rate)]
+d_race_us[ , `:=` (us_total_nonwhite_rate = us_total_black_rate + us_total_hispanic_rate + us_total_asian_rate + us_total_other_rate)]
+
 # Left join to full data
 d_full <- merge(x = d_full, y = d_race_us, by = 'censusid', all.x = TRUE)
 head(d_full)
@@ -1018,10 +1075,52 @@ d_race_pr <- d_race_pr[ , c('censusid',
                             'pr_born_us_white_alone_rate',
                             'pr_born_outside_white_alone_rate')]
 
+# Convert to numeric
+d_race_pr[ , `:=` (pr_total_black_rate = as.numeric(pr_total_black_rate),
+                   pr_born_in_black_rate = as.numeric(pr_born_in_black_rate),
+                   pr_born_us_black_rate = as.numeric(pr_born_us_black_rate),
+                   pr_born_outside_black_rate = as.numeric(pr_born_outside_black_rate),
+                   pr_total_american_indian_rate = as.numeric(pr_total_american_indian_rate),
+                   pr_born_in_american_indiane_rate = as.numeric(pr_born_in_american_indiane_rate),
+                   pr_born_us_american_indian_rate = as.numeric(pr_born_us_american_indian_rate),
+                   pr_born_outside_american_indian_rate = as.numeric(pr_born_outside_american_indian_rate),
+                   pr_total_asian_rate = as.numeric(pr_total_asian_rate),
+                   pr_born_us_asian_rate = as.numeric(pr_born_us_asian_rate),
+                   pr_born_outside_asian_rate = as.numeric(pr_born_outside_asian_rate),
+                   pr_total_native_hawaiian_rate = as.numeric(pr_total_native_hawaiian_rate),
+                   pr_born_in_native_hawaiian_rate = as.numeric(pr_born_in_native_hawaiian_rate),
+                   pr_born_us_native_hawaiian_rate = as.numeric(pr_born_us_native_hawaiian_rate),
+                   pr_born_outside_native_hawaiian_rate = as.numeric(pr_born_outside_native_hawaiian_rate),
+                   pr_total_other_rate = as.numeric(pr_total_other_rate),
+                   pr_born_in_other_rate = as.numeric(pr_born_in_other_rate),
+                   pr_born_us_other_rate = as.numeric(pr_born_us_other_rate),
+                   pr_born_outside_other_rate = as.numeric(pr_born_outside_other_rate),
+                   pr_total_hispanic_rate = as.numeric(pr_total_hispanic_rate),
+                   pr_born_in_hispanic_rate = as.numeric(pr_born_in_hispanic_rate),
+                   pr_born_us_hispanic_rate = as.numeric(pr_born_us_hispanic_rate),
+                   pr_born_outside_hispanic_rate = as.numeric(pr_born_outside_hispanic_rate),
+                   pr_total_white_alone_rate = as.numeric(pr_total_white_alone_rate),
+                   pr_born_in_white_alone_rate = as.numeric(pr_born_in_white_alone_rate),
+                   pr_born_us_white_alone_rate = as.numeric(pr_born_us_white_alone_rate),
+                   pr_born_outside_white_alone_rate = as.numeric(pr_born_outside_white_alone_rate))]
+
+# Create certain groups
+d_race_pr[ , `:=` (pr_total_other_rate = pr_total_american_indian_rate + pr_total_asian_rate + pr_total_native_hawaiian_rate + pr_total_other_rate)]
+d_race_pr[ , `:=` (pr_total_nonwhite_rate = pr_total_black_rate + pr_total_hispanic_rate + pr_total_asian_rate + pr_total_other_rate)]
+
 # Left join to full data
 d_full <- merge(x = d_full, y = d_race_pr, by = 'censusid', all.x = TRUE)
+
+# Combined US/PR rates into single race
+d_full[ ,`:=` (total_white_alone_rate = ifelse(substr(tractid,1,2) == '72', pr_total_white_alone_rate/100, us_total_white_alone_rate/100),
+                total_black_rate = ifelse(substr(tractid,1,2) == '72', pr_total_black_rate/100, us_total_black_rate/100),
+                total_hispanic_rate = ifelse(substr(tractid,1,2) == '72', pr_total_hispanic_rate/100, us_total_hispanic_rate/100),
+                total_other_rate = ifelse(substr(tractid,1,2) == '72', pr_total_other_rate/100, us_total_other_rate/100),
+                total_nonwhite_rate = ifelse(substr(tractid,1,2) == '72', pr_total_nonwhite_rate/100, us_total_nonwhite_rate/100))]
+
 head(d_full)
 ```
+
 
 ## Nativity and Citizenship
 
@@ -1052,7 +1151,7 @@ setnames(d_citizen, old = c('Estimate!!Total',
                              'native_outside_us_abroad',
                              'total_foreign',
                              'foreign_citizen',
-                             'foreign_not_citizen'))
+                             'foreign_non_citizen'))
 
 # Keep required fields
 d_citizen <- d_citizen[ , c('censusid',
@@ -1066,7 +1165,19 @@ d_citizen <- d_citizen[ , c('censusid',
                             'native_outside_us_abroad',
                             'total_foreign',
                             'foreign_citizen',
-                            'foreign_not_citizen')]
+                            'foreign_non_citizen')]
+
+# Calculate rates
+d_citizen[ , `:=` (total_native_rate = total_native/total_population_nativity,
+                      native_in_state_rate = native_in_state/total_population_nativity,
+                      native_out_state_rate = native_out_state/total_population_nativity,
+                      native_outside_us_rate = native_outside_us/total_population_nativity,
+                      native_outside_us_puerto_rate = native_outside_us_puerto/total_population_nativity,
+                      native_outside_us_islands_rate = native_outside_us_islands/total_population_nativity,
+                      native_outside_us_abroad_rate = native_outside_us_abroad/total_population_nativity,
+                      total_foreign_rate = total_foreign/total_population_nativity,
+                      foreign_citizen_rate = foreign_citizen/total_population_nativity,
+                      foreign_non_citizen_rate = foreign_non_citizen/total_population_nativity)]
 
 # Left join to full data
 d_full <- merge(x = d_full, y = d_citizen, by = 'censusid', all.x = TRUE)
@@ -1107,6 +1218,162 @@ tail(d_full)
 
 ```{r}
 # Write to csv
-fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
+#fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
+```
+
+
+
+
+
+## Disaster Vulnerability Index
+
+```{r}
+# Read in data
+d_full <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding='UTF-8')
+d_census <- d_full
+
+# Reformat variable
+d_census[ , `:=` (median_earnings_total = as.numeric(median_earnings_total))]
+```
+
+
+```{r}
+# Keep key demographics
+d_census <- d_census[ , c('tractid',
+                          'below_poverty_rate',
+                          'unemployed_labor_rate',
+                          'median_earnings_total',
+                          'owner_occupied_rate',
+                          'built_1979_or_earlier_rate', 'built_1980_or_later_rate')]
+
+#'total_white_alone_rate', 'total_black_rate', 'total_hispanic_rate', 'total_other_rate'
+#'total_native_rate', 'foreign_citizen_rate', 'foreign_non_citizen_rate'
+
+head(d_census)
+summary(d_census)
+
+# Select rows with any NAs
+d_census[rowSums(is.na(d_census)) > 0, ]
+```
+
+
+```{r}
+# Percentile ranking function
+percent_rank_asc <- function(x) trunc((rank(x)-1))/(length(x)-1)
+percent_rank_desc <- function(x) trunc((rank(desc(x))-1))/(length(x)-1)
+```
+
+## Below Poverty Rate
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(below_poverty_rate), c('tractid', 'below_poverty_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'poverty_rank' <- percent_rank_asc(d_valid$below_poverty_rate))
+d_valid <- d_valid[ , c('tractid', 'poverty_rank')]
+
+d_full <- merge(x = d_census, y = d_valid, by = 'tractid', all.x = TRUE)
+```
+
+## Unemployed Rate
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(unemployed_labor_rate), c('tractid', 'unemployed_labor_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'unemployed_rank' <- percent_rank_asc(d_valid$unemployed_labor_rate))
+d_valid <- d_valid[ , c('tractid', 'unemployed_rank')]
+
+d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+```
+
+## Median Earnings
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(median_earnings_total), c('tractid', 'median_earnings_total')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'earnings_rank' <- percent_rank_desc(d_valid$median_earnings_total))
+d_valid <- d_valid[ , c('tractid', 'earnings_rank')]
+
+d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+```
+
+## Owner Occupied Rate
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(owner_occupied_rate), c('tractid', 'owner_occupied_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'owner_rank' <- percent_rank_asc(d_valid$owner_occupied_rate))
+d_valid <- d_valid[ , c('tractid', 'owner_rank')]
+
+d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+```
+
+## House Built Year
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(built_1979_or_earlier_rate), c('tractid', 'built_1979_or_earlier_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'house_old_rank' <- percent_rank_asc(d_valid$built_1979_or_earlier_rate))
+d_valid <- d_valid[ , c('tractid', 'house_old_rank')]
+
+d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+```
+
+## Vulnerability Index
+
+```{r}
+# Raw Disaster Vulnerability Index (SVI)
+d_full[ ,`:=` (dvi_raw = poverty_rank + unemployed_rank + earnings_rank + owner_rank + house_old_rank)]
+
+# Keep ranks and index
+d_trim <- d_full[ , c('tractid', 'poverty_rank', 'unemployed_rank', 'earnings_rank',
+                      'owner_rank', 'house_old_rank', 'dvi_raw')]
+
+# Remove rows with NAs
+(d_trim <- na.omit(d_trim))
+```
+
+```{r}
+# Min-max scaling
+normalize <- function(x) {
+    return((x- min(x)) /(max(x)-min(x)))
+}
+# Scale SDI
+d_trim$dvi <- normalize(d_trim$dvi_raw)
+
+head(d_trim)
+```
+
+
+```{r fig.width=12, fig.height=4}
+# Raw DVI
+p_raw <- ggplot(d_trim, aes(x=dvi_raw)) + 
+  geom_density() +
+  ggtitle('Raw Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Raw DVI')
+
+# Scaled DVI
+p_scaled <- ggplot(d_trim, aes(x=dvi)) + 
+  geom_density() +
+  ggtitle('Scaled Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Scaled DVI')
+
+grid.arrange(p_raw, p_scaled, ncol = 2)
+```
+
+```{r}
+# Write to csv
+#fwrite(d_trim, file = '../data/census-tract/census-tract-dvi.csv')
 ```
 
