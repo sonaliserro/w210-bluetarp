@@ -1406,7 +1406,7 @@ fwrite(d_trim, file = '../data/census-tract/census-tract-dvi.csv')
 
 ```{r}
 # Merge DVI score into full demographics
-d_full <- merge(x = d_full, y = d_rank, by = 'censusid', all.x = TRUE)
+d_full <- merge(x = d_full, y = d_trim, by = 'censusid', all.x = TRUE)
 
 head(d_full)
 ```
