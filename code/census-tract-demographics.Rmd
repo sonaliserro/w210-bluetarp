@@ -1416,3 +1416,15 @@ head(d_full)
 fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
 ```
 
+## Omit Record with NAs
+
+```{r}
+# Write to csv
+d_trim <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
+
+d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate', 'dvi'))
+
+# Write to csv
+fwrite(d_trim, file = '../data/census-tract/census-tract-demographics-trim.csv')
+```
+
