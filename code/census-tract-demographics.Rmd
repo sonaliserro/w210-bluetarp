@@ -89,10 +89,10 @@ read_data <- function(file){
   d[d == '*****'] <- NA   # margin - the estimate is controlled. A statistical test for sampling variability is not appropriate.
   d[d == 'N'] <- NA       # both - data for this geographic area cannot be displayed because the number of sample cases is too small.
   d[d == '(X)'] <- NA     # estimate - not applicable or not available.
-  
-  # Not sure how to handle these cases
-  #  d[d == '-'] <- NA       # median estimate - the median falls in the lowest interval of an open-ended distribution.
-  #  d[d == '+'] <- NA       # median estimate - the median falls in the upper interval of an open-ended distribution.
+
+  # Extreme estimates converted NAs later in script (median earnings/median value)
+  # median estimate - the median falls in the lowest interval of an open-ended distribution.
+  # median estimate - the median falls in the upper interval of an open-ended distribution.
 
   return(d)
   }
@@ -133,7 +133,7 @@ d_education
 setnames(d_education, old = c('Estimate!!Total!!Population 25 years and over',
                               'Estimate!!Total!!Population 25 years and over!!High school graduate (includes equivalency)',
                               "Estimate!!Total!!Population 25 years and over!!Bachelor's degree",
-                              "Estimate!!Total!!Population 25 years and over!!Graduate or professional degree",
+                              'Estimate!!Total!!Population 25 years and over!!Graduate or professional degree',
                               "Estimate!!Percent!!Population 25 years and over!!Percent bachelor's degree or higher"),
                       new = c('total_population_edu',
                               'high_school_grad',
@@ -1184,6 +1184,40 @@ d_full <- merge(x = d_full, y = d_citizen, by = 'censusid', all.x = TRUE)
 d_full
 ```
 
+## Extreme Estimates Clean-Up
+
+```{r}
+# Replace '-' estimates with NAs - median earnings and median value
+d_full$median_earnings_total[d_full$median_earnings_total %like% '-'] <- NA
+d_full$median_earnings_male[d_full$median_earnings_male %like% '-'] <- NA
+d_full$median_earnings_male_fulltime[d_full$median_earnings_male_fulltime %like% '-'] <- NA
+d_full$median_earnings_male_other[d_full$median_earnings_male_other %like% '-'] <- NA
+d_full$median_earnings_female[d_full$median_earnings_female %like% '-'] <- NA
+d_full$median_earnings_female_fulltime[d_full$median_earnings_female_fulltime %like% '-'] <- NA
+d_full$median_earnings_female_other[d_full$median_earnings_female_other %like% '-'] <- NA
+d_full$median_value[d_full$median_value %like% '-'] <- NA
+
+# Replace '+' estimates with NAs - median earnings and median value
+d_full$median_earnings_total[d_full$median_earnings_total %like% '\\+'] <- NA
+d_full$median_earnings_male[d_full$median_earnings_male %like% '\\+'] <- NA
+d_full$median_earnings_male_fulltime[d_full$median_earnings_male_fulltime %like% '\\+'] <- NA
+d_full$median_earnings_male_other[d_full$median_earnings_male_other %like% '\\+'] <- NA
+d_full$median_earnings_female[d_full$median_earnings_female %like% '\\+'] <- NA
+d_full$median_earnings_female_fulltime[d_full$median_earnings_female_fulltime %like% '\\+'] <- NA
+d_full$median_earnings_female_other[d_full$median_earnings_female_other %like% '\\+'] <- NA
+d_full$median_value[d_full$median_value %like% '\\+'] <- NA
+
+# Convert to numeric post clean-up
+d_full[ , `:=` (median_earnings_total = as.numeric(median_earnings_total),
+                median_earnings_male = as.numeric(median_earnings_male),
+                median_earnings_male_fulltime = as.numeric(median_earnings_male_fulltime),
+                median_earnings_male_other = as.numeric(median_earnings_male_other),
+                median_earnings_female = as.numeric(median_earnings_female),
+                median_earnings_female_fulltime = as.numeric(median_earnings_female_fulltime),
+                median_earnings_female_other = as.numeric(median_earnings_female_other),
+                median_value = as.numeric(median_value))]
+```
+
 
 ## GIS Coordinates for Tracts (Latitude/Longitude)
 
@@ -1218,28 +1252,19 @@ tail(d_full)
 
 ```{r}
 # Write to csv
-#fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
+fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
 ```
 
 
 
-
-
-## Disaster Vulnerability Index
+# Disaster Vulnerability Index
 
 ```{r}
 # Read in data
-d_full <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding='UTF-8')
-d_census <- d_full
+d_census <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding='UTF-8')
 
-# Reformat variable
-d_census[ , `:=` (median_earnings_total = as.numeric(median_earnings_total))]
-```
-
-
-```{r}
 # Keep key demographics
-d_census <- d_census[ , c('tractid',
+d_census <- d_census[ , c('censusid',
                           'below_poverty_rate',
                           'unemployed_labor_rate',
                           'median_earnings_total',
@@ -1267,75 +1292,75 @@ percent_rank_desc <- function(x) trunc((rank(desc(x))-1))/(length(x)-1)
 
 ```{r}
 # Drop NAs
-d_valid <- d_census[!is.na(below_poverty_rate), c('tractid', 'below_poverty_rate')]
+d_valid <- d_census[!is.na(below_poverty_rate), c('censusid', 'below_poverty_rate')]
 
 # Calculate percentile rank
 d_valid <- within(d_valid, 'poverty_rank' <- percent_rank_asc(d_valid$below_poverty_rate))
-d_valid <- d_valid[ , c('tractid', 'poverty_rank')]
+d_valid <- d_valid[ , c('censusid', 'poverty_rank')]
 
-d_full <- merge(x = d_census, y = d_valid, by = 'tractid', all.x = TRUE)
+d_rank <- merge(x = d_census, y = d_valid, by = 'censusid', all.x = TRUE)
 ```
 
 ## Unemployed Rate
 
 ```{r}
 # Drop NAs
-d_valid <- d_census[!is.na(unemployed_labor_rate), c('tractid', 'unemployed_labor_rate')]
+d_valid <- d_census[!is.na(unemployed_labor_rate), c('censusid', 'unemployed_labor_rate')]
 
 # Calculate percentile rank
 d_valid <- within(d_valid, 'unemployed_rank' <- percent_rank_asc(d_valid$unemployed_labor_rate))
-d_valid <- d_valid[ , c('tractid', 'unemployed_rank')]
+d_valid <- d_valid[ , c('censusid', 'unemployed_rank')]
 
-d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
 ```
 
 ## Median Earnings
 
 ```{r}
 # Drop NAs
-d_valid <- d_census[!is.na(median_earnings_total), c('tractid', 'median_earnings_total')]
+d_valid <- d_census[!is.na(median_earnings_total), c('censusid', 'median_earnings_total')]
 
 # Calculate percentile rank
 d_valid <- within(d_valid, 'earnings_rank' <- percent_rank_desc(d_valid$median_earnings_total))
-d_valid <- d_valid[ , c('tractid', 'earnings_rank')]
+d_valid <- d_valid[ , c('censusid', 'earnings_rank')]
 
-d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
 ```
 
 ## Owner Occupied Rate
 
 ```{r}
 # Drop NAs
-d_valid <- d_census[!is.na(owner_occupied_rate), c('tractid', 'owner_occupied_rate')]
+d_valid <- d_census[!is.na(owner_occupied_rate), c('censusid', 'owner_occupied_rate')]
 
 # Calculate percentile rank
 d_valid <- within(d_valid, 'owner_rank' <- percent_rank_asc(d_valid$owner_occupied_rate))
-d_valid <- d_valid[ , c('tractid', 'owner_rank')]
+d_valid <- d_valid[ , c('censusid', 'owner_rank')]
 
-d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
 ```
 
 ## House Built Year
 
 ```{r}
 # Drop NAs
-d_valid <- d_census[!is.na(built_1979_or_earlier_rate), c('tractid', 'built_1979_or_earlier_rate')]
+d_valid <- d_census[!is.na(built_1979_or_earlier_rate), c('censusid', 'built_1979_or_earlier_rate')]
 
 # Calculate percentile rank
 d_valid <- within(d_valid, 'house_old_rank' <- percent_rank_asc(d_valid$built_1979_or_earlier_rate))
-d_valid <- d_valid[ , c('tractid', 'house_old_rank')]
+d_valid <- d_valid[ , c('censusid', 'house_old_rank')]
 
-d_full <- merge(x = d_full, y = d_valid, by = 'tractid', all.x = TRUE)
+d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
 ```
 
 ## Vulnerability Index
 
 ```{r}
 # Raw Disaster Vulnerability Index (SVI)
-d_full[ ,`:=` (dvi_raw = poverty_rank + unemployed_rank + earnings_rank + owner_rank + house_old_rank)]
+d_rank[ ,`:=` (dvi_raw = poverty_rank + unemployed_rank + earnings_rank + owner_rank + house_old_rank)]
 
 # Keep ranks and index
-d_trim <- d_full[ , c('tractid', 'poverty_rank', 'unemployed_rank', 'earnings_rank',
+d_trim <- d_rank[ , c('censusid', 'poverty_rank', 'unemployed_rank', 'earnings_rank',
                       'owner_rank', 'house_old_rank', 'dvi_raw')]
 
 # Remove rows with NAs
@@ -1374,6 +1399,32 @@ grid.arrange(p_raw, p_scaled, ncol = 2)
 
 ```{r}
 # Write to csv
-#fwrite(d_trim, file = '../data/census-tract/census-tract-dvi.csv')
+fwrite(d_trim, file = '../data/census-tract/census-tract-dvi.csv')
+```
+
+## Add DVI into Full Demographics File
+
+```{r}
+# Merge DVI score into full demographics
+d_full <- merge(x = d_full, y = d_trim, by = 'censusid', all.x = TRUE)
+
+head(d_full)
+```
+
+```{r}
+# Write to csv
+fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
+```
+
+## Omit Record with NAs
+
+```{r}
+# Write to csv
+d_trim <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
+
+d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate', 'dvi'))
+
+# Write to csv
+fwrite(d_trim, file = '../data/census-tract/census-tract-demographics-trim.csv')
 ```
 
