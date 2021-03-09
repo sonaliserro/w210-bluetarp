@@ -1398,6 +1398,18 @@ grid.arrange(p_raw, p_scaled, ncol = 2)
 ```
 
 ```{r}
+# Census Tract ID
+d_trim[ , `:=` (tractid = substr(censusid, 10, 22))]
+
+# Reorder variables
+d_trim <- d_trim %>%
+  select(tractid, everything()) %>%
+  select(censusid, everything())
+
+head(d_trim)
+```
+
+```{r}
 # Write to csv
 fwrite(d_trim, file = '../data/census-tract/census-tract-dvi.csv')
 ```
@@ -1406,8 +1418,8 @@ fwrite(d_trim, file = '../data/census-tract/census-tract-dvi.csv')
 
 ```{r}
 # Merge DVI score into full demographics
-d_full <- merge(x = d_full, y = d_trim, by = 'censusid', all.x = TRUE)
-
+ d_full <- merge(x = d_full, y = d_trim, by = 'censusid', all.x = TRUE)
+ 
 head(d_full)
 ```
 
@@ -1422,9 +1434,195 @@ fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
 # Write to csv
 d_trim <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
 
-d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate', 'dvi'))
+d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate'))
 
 # Write to csv
 fwrite(d_trim, file = '../data/census-tract/census-tract-demographics-trim.csv')
 ```
+
+
+
+
+# Disaster Vulnerability Index (no income)
+
+```{r}
+# Read in data
+d_census <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding='UTF-8')
+
+# Keep key demographics
+d_census <- d_census[ , c('censusid',
+                          'below_poverty_rate',
+                          'unemployed_labor_rate',
+                          'owner_occupied_rate',
+                          'built_1979_or_earlier_rate', 'built_1980_or_later_rate')]
+
+#'total_white_alone_rate', 'total_black_rate', 'total_hispanic_rate', 'total_other_rate'
+#'total_native_rate', 'foreign_citizen_rate', 'foreign_non_citizen_rate'
+
+head(d_census)
+summary(d_census)
+
+# Select rows with any NAs
+d_census[rowSums(is.na(d_census)) > 0, ]
+```
+
+
+```{r}
+# Percentile ranking function
+percent_rank_asc <- function(x) trunc((rank(x)-1))/(length(x)-1)
+percent_rank_desc <- function(x) trunc((rank(desc(x))-1))/(length(x)-1)
+```
+
+## Below Poverty Rate
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(below_poverty_rate), c('censusid', 'below_poverty_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'poverty_rank' <- percent_rank_asc(d_valid$below_poverty_rate))
+d_valid <- d_valid[ , c('censusid', 'poverty_rank')]
+
+d_rank <- merge(x = d_census, y = d_valid, by = 'censusid', all.x = TRUE)
+```
+
+## Unemployed Rate
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(unemployed_labor_rate), c('censusid', 'unemployed_labor_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'unemployed_rank' <- percent_rank_asc(d_valid$unemployed_labor_rate))
+d_valid <- d_valid[ , c('censusid', 'unemployed_rank')]
+
+d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+```
+
+## Median Earnings
+
+```{r}
+# Drop NAs
+# d_valid <- d_census[!is.na(median_earnings_total), c('censusid', 'median_earnings_total')]
+# 
+# # Calculate percentile rank
+# d_valid <- within(d_valid, 'earnings_rank' <- percent_rank_desc(d_valid$median_earnings_total))
+# d_valid <- d_valid[ , c('censusid', 'earnings_rank')]
+# 
+# d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+```
+
+## Owner Occupied Rate
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(owner_occupied_rate), c('censusid', 'owner_occupied_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'owner_rank' <- percent_rank_asc(d_valid$owner_occupied_rate))
+d_valid <- d_valid[ , c('censusid', 'owner_rank')]
+
+d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+```
+
+## House Built Year
+
+```{r}
+# Drop NAs
+d_valid <- d_census[!is.na(built_1979_or_earlier_rate), c('censusid', 'built_1979_or_earlier_rate')]
+
+# Calculate percentile rank
+d_valid <- within(d_valid, 'house_old_rank' <- percent_rank_asc(d_valid$built_1979_or_earlier_rate))
+d_valid <- d_valid[ , c('censusid', 'house_old_rank')]
+
+d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+```
+
+## Vulnerability Index
+
+```{r}
+# Raw Disaster Vulnerability Index (SVI)
+d_rank[ ,`:=` (dvi_raw = poverty_rank + unemployed_rank + owner_rank + house_old_rank)]
+
+# Keep ranks and index
+d_trim <- d_rank[ , c('censusid', 'poverty_rank', 'unemployed_rank',
+                      'owner_rank', 'house_old_rank', 'dvi_raw')]
+
+# Remove rows with NAs
+(d_trim <- na.omit(d_trim))
+```
+
+```{r}
+# Min-max scaling
+normalize <- function(x) {
+    return((x- min(x)) /(max(x)-min(x)))
+}
+# Scale SDI
+d_trim$dvi <- normalize(d_trim$dvi_raw)
+
+head(d_trim)
+```
+
+
+```{r fig.width=12, fig.height=4}
+# Raw DVI
+p_raw <- ggplot(d_trim, aes(x=dvi_raw)) + 
+  geom_density() +
+  ggtitle('Raw Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Raw DVI')
+
+# Scaled DVI
+p_scaled <- ggplot(d_trim, aes(x=dvi)) + 
+  geom_density() +
+  ggtitle('Scaled Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Scaled DVI')
+
+grid.arrange(p_raw, p_scaled, ncol = 2)
+```
+
+```{r}
+# Census Tract ID
+d_trim[ , `:=` (tractid = substr(censusid, 10, 22))]
+
+# Reorder variables
+d_trim <- d_trim %>%
+  select(tractid, everything()) %>%
+  select(censusid, everything())
+
+head(d_trim)
+```
+
+```{r}
+# Write to csv
+fwrite(d_trim, file = '../data/census-tract/census-tract-dvi-v2.csv')
+```
+
+## Add DVI into Full Demographics File
+
+```{r}
+# # Merge DVI score into full demographics
+# d_full <- merge(x = d_full, y = d_trim, by = 'censusid', all.x = TRUE)
+# 
+# head(d_full)
+```
+
+```{r}
+# # Write to csv
+# fwrite(d_full, file = '../data/census-tract/census-tract-demographics-v2.csv')
+```
+
+## Omit Record with NAs
+
+```{r}
+# # Write to csv
+# d_trim <- fread(file = '../data/census-tract/census-tract-demographics-v2.csv', encoding = 'UTF-8')
+# 
+# d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate', 'dvi'))
+# 
+# # Write to csv
+# fwrite(d_trim, file = '../data/census-tract/census-tract-demographics-trim-v2.csv')
+```
+
 
