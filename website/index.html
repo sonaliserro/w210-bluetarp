@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Project Blue Tarp</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+      @import url("https://use.typekit.net/zbe5ofc.css");
+
+      /* Set extra padding for main-content */
+      .main-content {
+        padding-left: 140px;
+        padding-right: 140px;
+      }
+
+      .header {
+        padding-left: 70px;
+        height: 20%;
+        background-image: linear-gradient(to bottom, rgba(64, 109, 181, 0.25), rgba(255, 255, 255, 1) 95%), url("https://eoimages.gsfc.nasa.gov/images/imagerecords/92000/92789/puertorico_gliht_2018117_lrg.jpg");
+        background-size: cover;
+      }
+
+
+      /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
+      .row.content {
+        height: 100vh;
+      }
+
+      /* Set gray background color and 100% height */
+      .sidenav {
+        background-color: #f1f1f1;
+        height: 100vh;
+      }
+
+      .sidenav li {
+        font-size: 120%;
+      }
+
+      /* Set default font for body */
+      body {
+        font-family: source-sans-pro !important;
+        background-color: rgba(255, 255, 255);
+      }
+
+      /* Make h1 bold */
+      h1 {
+        font-weight: bold;
+        font-size: 4.5rem;
+      }
+
+      .badge-pill {
+        background-color: #eeee81;
+        padding: 5px 12px;
+        font-size: 2rem;
+        color: black;
+      }
+
+      .intro-box-body {
+        padding-top: 10px;
+        padding-left: 5px;
+        padding-bottom: 10px;
+        font-size: 120%;
+      }
+
+      .intro-box-body p {
+        max-width: 60em;
+        align:
+      }
+
+      /* Make logo fit width of nav bar */
+      #logo {
+        max-width:100%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* On small screens, set height to 'auto' for the grid */
+      @media screen and (max-width: 767px) {
+        .row.content {height: auto;}
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse visible-xs">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html">Logo</a>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="index.html">Home</a></li>
+            <li><a href="data-intro.html">Our Data</a></li>
+            <li><a href="approach.html">Our Approach</a></li>
+            <li><a href="findings.html">Findings</a></li>
+            <li><a href="conclusion.html">Conclusion</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row content">
+        <div class="col-sm-2 sidenav hidden-xs">
+          <br>
+          <img id="logo" src="bluetarp-logo1.png" alt="Project Blue Tarp logo">
+          <br>
+          <ul class="nav nav-pills nav-stacked">
+            <li class="active"><a href="index.html">Home</a></li>
+            <li><a href="data-intro.html">Our Data</a></li>
+            <li><a href="approach.html">Our Approach</a></li>
+            <li><a href="findings.html">Findings</a></li>
+            <li><a href="conclusion.html">Conclusion</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul><br>
+        </div>
+        <br>
+        <div class="col-md-10 header">
+        </div>
+        <div class="col-md-10 main-content">
+          <div class="title">
+            <h1>Welcome to Project Blue Tarp!</h1>
+            <br>
+          </div>
+        </div>
+        <div class="col-md-10 main-content">
+          <div class="intro-box">
+            <div class="intro-box-heading">
+              <span class="badge badge-pill">Objective</span>
+            </div>
+            <div class="intro-box-body">
+              <p>Our project evaluates the extent to which FEMA's Housing Assistance funds were allocated consistently during the 2017 hurricane season, through a comparison of mainland U.S. states (specifically, Florida and Texas) and Puerto Rico.</p>
+            </div>
+          </div>
+          <div class="intro-box">
+            <div class="intro-box-heading">
+              <span class="badge badge-pill">Background</span>
+            </div>
+            <div class="intro-box-body">
+              <p>Hurricane Irma, Hurricane Harvey, and Hurricane Maria severely impacted Florida, Texas, and Puerto Rico in 2017. In the wake of these disasters, many turned to the Federal Emergency Management Agency (FEMA) for support through the Individuals and Households Program (IHP), which “provides financial assistance and direct services and eligible individuals and households who have uninsured or underinsured necessary expenses and serious needs” (Federal Emergency Management Agency, 2020, p. 5). One major category of IHP assistance is Housing Assistance, which includes lodging expense reimbursement, rental assistance, repair assistance, and replacement assistance. </p>
+              <p>As explicitly stated by FEMA, IHP is not meant to substitute for insurance and is intended to meet basic needs while supplementing disaster recovery efforts. Yet in the wake of major disasters such as these 2017 hurricanes, millions of people were in dire need of assistance and the allocation of resources happened in a rather opaque process. The question then turns towards whether or not there was a fair and uniformly applied allocation across jurisdictions in the United States.</p>
+            </div>
+          </div>
+          <div class="intro-box">
+            <div class="intro-box-heading">
+              <span class="badge badge-pill">Users</span>
+            </div>
+            <div class="intro-box-body">
+              <p>Field experts and academics who can expand and further build upon our analysis to address outstanding needs for an effective disaster recovery process.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
