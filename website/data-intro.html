@@ -14,8 +14,8 @@
 
       /* Set extra padding for main-content */
       .main-content {
-        padding-left: 140px;
-        padding-right: 140px;
+        padding-left: 380px;
+        padding-right: 100px;
       }
 
       .header {
@@ -27,14 +27,20 @@
 
 
       /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
-      .row.content {
+      .row {
         height: 100vh;
       }
 
       /* Set gray background color and 100% height */
       .sidenav {
+        width: 260px;
         background-color: #f1f1f1;
-        height: 100vh;
+        height: 100%;
+        position: fixed;
+        z-index: 1000;
+        overflow-x: hidden;
+        display: block;
+        padding: 20px;
       }
 
       .sidenav li {
@@ -72,8 +78,12 @@
         align:
       }
 
+      .num-callout {
+        display: block;
+      }
+
       .num-callout h1 {
-        font-size: 500%;
+        font-size: 6rem;
         text-align: center;
         margin-bottom: 0;
       }
@@ -81,6 +91,18 @@
       .num-callout p {
         font-size: 120%;
         text-align: center;
+      }
+
+      .tableau-viz {
+        align: center;
+      }
+
+      .tableau-viz iframe {
+        width: 80%;
+        height: 800px;
+        display: block;
+        margin-left: 50px;
+        margin-right: auto;
       }
 
       /* Make logo fit width of nav bar */
@@ -94,6 +116,15 @@
       /* On small screens, set height to 'auto' for the grid */
       @media screen and (max-width: 767px) {
         .row.content {height: auto;}
+        .header {
+          padding-left: 300px;
+          padding-right: 40px;
+        }
+        .main-content {
+          padding-right: 40px;
+          padding-left: 300px;
+        }
+        }
       }
     </style>
   </head>
@@ -123,8 +154,8 @@
     </nav>
 
     <div class="container-fluid">
-      <div class="row content">
-        <div class="col-sm-2 sidenav hidden-xs">
+      <div class="row">
+        <div class="sidenav">
           <br>
           <img id="logo" src="bluetarp-logo1.png" alt="Project Blue Tarp logo">
           <br>
@@ -136,56 +167,62 @@
             <li><a href="conclusion.html">Conclusion</a></li>
             <li><a href="contact.html">Contact</a></li>
           </ul><br>
-        </div>
         <br>
-        <div class="col-md-10 header">
-        </div>
-        <div class="col-md-10 main-content">
-          <div class="title">
+      </div>
+
+      <div class="col-sm-12 header">
+      </div>
+      <div class="col-sm-12 main-content">
+        <div class="title">
           <h1>Our Data</h1>
+        </div>
+      </div>
+      <div class="col-sm-12 main-content">
+        <div class="intro-box">
+          <div class="intro-box-body">
+            <p>To conduct our analysis, we combined several public datasets, including OpenFEMA’s Individual Assistance Housing Registrants – Large Disasters data, U.S. Census Bureau’s American Community Survey – 5 Year Estimates data, and National Oceanic and Atmospheric Administration’s Hurricane data.</p>
+            <br>
           </div>
         </div>
-        <div class="col-md-10 main-content">
-          <div class="intro-box">
-            <div class="intro-box-body">
-              <p>To conduct our analysis, we combined several public datasets, including OpenFEMA’s Individual Assistance Housing Registrants – Large Disasters data, U.S. Census Bureau’s American Community Survey – 5 Year Estimates data, and National Oceanic and Atmospheric Administration’s Hurricane data.</p>
-              <br>
-            </div>
+        <div class="intro-box">
+          <div class="intro-box-heading">
+            <span class="badge badge-pill">OpenFEMA’s Individual Assistance Housing Registrants – Large Disasters</span>
           </div>
-          <div class="intro-box">
-            <div class="intro-box-heading">
-              <span class="badge badge-pill">OpenFEMA’s Individual Assistance Housing Registrants – Large Disasters</span>
-            </div>
-            <div class="intro-box-body">
-              <p>This dataset includes anonymized records of applications for FEMA’s Individual Assistance program during the 2017 hurricane season. The data was derived from the National Emergency Information System (NEMIS), which has been used to process all cases for FEMA’s Individual Assistance programs since 1998.</p>
-            </div>
+          <div class="intro-box-body">
+            <p>This dataset includes anonymized records of applications for FEMA’s Individual Assistance program during the 2017 hurricane season. The data was derived from the National Emergency Information System (NEMIS), which has been used to process all cases for FEMA’s Individual Assistance programs since 1998. In the dataset, we worked with:</p>
           </div>
         </div>
-        <div class="col-md-5 main-content">
-          <div class="intro-box">
-            <div class="num-callout">
-              <h1>$2.5 billion</h1>
-              <p>paid out in housing assistance</p>
-            </div>
+      </div>
+      <div class="col-sm-6 main-content num-callout">
+          <h1>$2.5 billion</h1>
+          <p>paid out in housing assistance</p>
+      </div>
+      <div class="col-sm-6 num-callout">
+        <h1>4.6 million</h1>
+        <p>anonymized registrations across the 3 hurricanes</p>
+      </div>
+      <div class="col-sm-12 main-content">
+        <div class="intro-box">
+          <div class="intro-box-body">
+            <br>
+            <p>Below, you will find some visualizations to help get a sense of housing assistance in Florida and Texas across Hurricane Irma and Harvey respectively at the county level for each jurisdiction.</p>
           </div>
         </div>
-        <div class="col-md-5 main-content">
-          <div class="intro-box">
-            <div class="num-callout">
-              <h1>4.6 million</h1>
-              <p>anonymized registrations across the 3 hurricanes</p>
-            </div>
-          </div>
+      </div>
+      <div class="col-sm-12 main-content">
+        <br>
+        <div class="tableau-viz">
+          <iframe src="https://public.tableau.com/views/IHPLgDisasters/FLIHPdashboard?::showVizHome=no&:embed=true" onload="this.height=this.content Window.document.body.scrollHeight;"></iframe>
         </div>
-        <div class="col-md-10 main-content">
-          <div class="intro-box">
-            <div class="intro-box-heading">
-              <br>
-              <span class="badge badge-pill">U.S. Census Bureau’s American Community Survey (5 Year Estimates)</span>
-            </div>
-            <div class="intro-box-body">
-              <p>This is placeholder text.</p>
-            </div>
+      </div>
+      <div class="col-sm-12 main-content">
+        <div class="intro-box">
+          <div class="intro-box-heading">
+            <br>
+            <span class="badge badge-pill">U.S. Census Bureau’s American Community Survey (5 Year Estimates)</span>
+          </div>
+          <div class="intro-box-body">
+            <p>This is placeholder text.</p>
           </div>
         </div>
       </div>
