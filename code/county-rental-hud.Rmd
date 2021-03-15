@@ -1,0 +1,93 @@
+---
+title: 'County Rental Amount - Feature File'
+subtitle: 'Census Demographic Master Script'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(tidyr)
+library(data.table)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+## Census Demographics by County
+
+```{r}
+# Read data
+d_demo <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
+
+# County FIPS code
+d_demo[ , `:=` (fips = substr(tractid, 1, 5))]
+
+head(d_demo)
+```
+
+```{r}
+# County aggregate
+d_county <- d_demo[ , .(occupied_housing_units_rate = sum(occupied_housing_units) / (sum(occupied_housing_units) + sum(vacant_housing_units)),
+                        vacant_housing_units_rate = sum(vacant_housing_units) / (sum(occupied_housing_units) + sum(vacant_housing_units)),
+                        owner_occupied_rate = sum(owner_occupied)/sum(tenure_occupied_housing_units)), keyby = c('fips', 'county')]
+
+head(d_county)
+```
+
+## HUD Fair Market Rates
+
+```{r}
+# Read HUD FMR data
+d_hud <- fread(file = '../data/hud/FMR-4050-County-Level-Data-FY2017.csv', encoding = 'UTF-8')
+
+# County FIPS code
+d_hud[ , `:=` (fips = substr(fips2010, 1, 5))]
+
+# Reorder variables
+d_hud <- d_hud %>%
+  select(fips, everything())
+
+head(d_hud)
+
+# Select required states and variables
+d_hud <- d_hud[state_alpha %in% c('FL', 'TX', 'PR', 'NC'), c('fips', 'fmr0', 'fmr1', 'fmr2', 'fmr3', 'fmr4', 'metro')]
+
+# Count records
+#nrow(d_county)
+#nrow(d_hud)
+
+head(d_hud)
+```
+
+## Census and HUD Joined
+
+```{r}
+# Left join to full data
+d_full <- merge(x = d_county, y = d_hud, by = 'fips', all.x = TRUE)
+
+nrow(d_full)
+head(d_full)
+
+# Write to csv
+fwrite(d_full, file = '../data/hud/HUD-FMR-with-demo.csv')
+```
+
+
+
+

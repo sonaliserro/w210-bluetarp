@@ -1,5 +1,5 @@
 ---
-title: 'Census Tract Demographics - Florida, Puerto Rico, Texas'
+title: 'Census Tract Demographics - Florida, Texas, Puerto Rico, North Carolina'
 subtitle: 'Census Demographic Master Script'
 author: 'Ross MacLean'
 geometry: margin=1in
@@ -465,22 +465,22 @@ setnames(d_housing, old = c('Estimate!!HOUSING OCCUPANCY!!Total housing units',
 'Percent Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!Lacking complete kitchen facilities',
 'Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!No telephone service available',
 'Percent Estimate!!SELECTED CHARACTERISTICS!!Occupied housing units!!No telephone service available',
-'Estimate!!VALUE!!Owner-occupied units!!Less than $50 000',
-'Percent Estimate!!VALUE!!Owner-occupied units!!Less than $50 000',
-'Estimate!!VALUE!!Owner-occupied units!!$50 000 to $99 999',
-'Percent Estimate!!VALUE!!Owner-occupied units!!$50 000 to $99 999',
-'Estimate!!VALUE!!Owner-occupied units!!$100 000 to $149 999',
-'Percent Estimate!!VALUE!!Owner-occupied units!!$100 000 to $149 999',
-'Estimate!!VALUE!!Owner-occupied units!!$150 000 to $199 999',
-'Percent Estimate!!VALUE!!Owner-occupied units!!$150 000 to $199 999',
-'Estimate!!VALUE!!Owner-occupied units!!$200 000 to $299 999',
-'Percent Estimate!!VALUE!!Owner-occupied units!!$200 000 to $299 999',
-'Estimate!!VALUE!!Owner-occupied units!!$300 000 to $499 999',
-'Percent Estimate!!VALUE!!Owner-occupied units!!$300 000 to $499 999',
-'Estimate!!VALUE!!Owner-occupied units!!$500 000 to $999 999',
-'Percent Estimate!!VALUE!!Owner-occupied units!!$500 000 to $999 999',
-'Estimate!!VALUE!!Owner-occupied units!!$1 000 000 or more',
-'Percent Estimate!!VALUE!!Owner-occupied units!!$1 000 000 or more',
+'Estimate!!VALUE!!Owner-occupied units!!Less than $50,000',
+'Percent Estimate!!VALUE!!Owner-occupied units!!Less than $50,000',
+'Estimate!!VALUE!!Owner-occupied units!!$50,000 to $99,999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$50,000 to $99,999',
+'Estimate!!VALUE!!Owner-occupied units!!$100,000 to $149,999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$100,000 to $149,999',
+'Estimate!!VALUE!!Owner-occupied units!!$150,000 to $199,999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$150,000 to $199,999',
+'Estimate!!VALUE!!Owner-occupied units!!$200,000 to $299,999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$200,000 to $299,999',
+'Estimate!!VALUE!!Owner-occupied units!!$300,000 to $499,999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$300,000 to $499,999',
+'Estimate!!VALUE!!Owner-occupied units!!$500,000 to $999,999',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$500,000 to $999,999',
+'Estimate!!VALUE!!Owner-occupied units!!$1,000,000 or more',
+'Percent Estimate!!VALUE!!Owner-occupied units!!$1,000,000 or more',
 'Estimate!!VALUE!!Owner-occupied units!!Median (dollars)',
 'Percent Estimate!!VALUE!!Owner-occupied units!!Median (dollars)',
 'Estimate!!SELECTED MONTHLY OWNER COSTS AS A PERCENTAGE OF HOUSEHOLD INCOME (SMOCAPI)!!Housing units with a mortgage (excluding units where SMOCAPI cannot be computed)',
@@ -810,318 +810,6 @@ tail(d_full)
 ```
 
 
-
-## Race in United States
-
-```{r}
-# Read data
-d_race_us <-read_data(file = '../data/census-tract/raw/race-us.csv')
-d_race_us
-
-# Rename fields
-setnames(d_race_us, old = c('Estimate!!Total!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Native; born in state of residence!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Native; born outside U.S.!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Total!!Total population!!White alone, not Hispanic or Latino',
-'Estimate!!Native; born in state of residence!!Total population!!White alone, not Hispanic or Latino',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!White alone, not Hispanic or Latino',
-'Estimate!!Native; born outside U.S.!!Total population!!White alone, not Hispanic or Latino',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race',
-'Estimate!!Native; born in state of residence!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race',
-'Estimate!!Native; born outside U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!White',
-'Estimate!!Native; born in state of residence!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!White',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!White',
-'Estimate!!Native; born outside U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!White',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Native; born in state of residence!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Native; born outside U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Native; born in state of residence!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Native; born outside U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Native; born in state of residence!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Native; born outside U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Native; born in state of residence!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Native; born outside U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race',
-'Estimate!!Native; born in state of residence!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race',
-'Estimate!!Native; born in other state in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race',
-'Estimate!!Native; born outside U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race'),
-                      new = c('us_total_hispanic_rate',
-                              'us_in_state_hispanic_rate',
-                              'us_out_state_hispanic_rate',
-                              'us_outside_hispanic_rate',
-                              'us_total_white_alone_rate',
-                              'us_in_state_white_alone_rate',
-                              'us_out_state_white_alone_rate',
-                              'us_outside_white_alone_rate',
-                              'us_total_race_rate',
-                              'us_in_state_race_rate',
-                              'us_out_state_race_rate',
-                              'us_outside_race_rate',
-                              'us_total_white_rate',
-                              'us_in_state_white_rate',
-                              'us_out_state_white_rate',
-                              'us_outside_white_rate',
-                              'us_total_black_rate',
-                              'us_in_state_black_rate',
-                              'us_out_state_black_rate',
-                              'us_outside_black_rate',
-                              'us_total_american_indian_rate',
-                              'us_in_state_american_indian_rate',
-                              'us_out_state_american_indian_rate',
-                              'us_outside_american_indian_rate',
-                              'us_total_asian_rate',
-                              'us_in_state_asian_rate',
-                              'us_out_state_asian_rate',
-                              'us_outside_asian_rate',
-                              'us_total_native_hawaiian_rate',
-                              'us_in_state_native_hawaiian_rate',
-                              'us_out_state_native_hawaiian_rate',
-                              'us_outside_native_hawaiian_rate',
-                              'us_total_other_rate',
-                              'us_in_state_other_rate',
-                              'us_out_state_other_rate',
-                              'us_outside_other_rate'))
-
-# Keep required fields
-d_race_us <- d_race_us[ , c('censusid',
-                            'us_total_hispanic_rate',
-                            'us_in_state_hispanic_rate',
-                            'us_out_state_hispanic_rate',
-                            'us_outside_hispanic_rate',
-                            'us_total_white_alone_rate',
-                            'us_in_state_white_alone_rate',
-                            'us_out_state_white_alone_rate',
-                            'us_outside_white_alone_rate',
-                            'us_total_race_rate',
-                            'us_in_state_race_rate',
-                            'us_out_state_race_rate',
-                            'us_outside_race_rate',
-                            'us_total_white_rate',
-                            'us_in_state_white_rate',
-                            'us_out_state_white_rate',
-                            'us_outside_white_rate',
-                            'us_total_black_rate',
-                            'us_in_state_black_rate',
-                            'us_out_state_black_rate',
-                            'us_outside_black_rate',
-                            'us_total_american_indian_rate',
-                            'us_in_state_american_indian_rate',
-                            'us_out_state_american_indian_rate',
-                            'us_outside_american_indian_rate',
-                            'us_total_asian_rate',
-                            'us_in_state_asian_rate',
-                            'us_out_state_asian_rate',
-                            'us_outside_asian_rate',
-                            'us_total_native_hawaiian_rate',
-                            'us_in_state_native_hawaiian_rate',
-                            'us_out_state_native_hawaiian_rate',
-                            'us_outside_native_hawaiian_rate',
-                            'us_total_other_rate',
-                            'us_in_state_other_rate',
-                            'us_out_state_other_rate',
-                            'us_outside_other_rate')]
-
-# Convert to numeric
-d_race_us[ , `:=` (us_total_hispanic_rate = as.numeric(us_total_hispanic_rate),
-                   us_in_state_hispanic_rate = as.numeric(us_in_state_hispanic_rate),
-                   us_out_state_hispanic_rate = as.numeric(us_out_state_hispanic_rate),
-                   us_outside_hispanic_rate = as.numeric(us_outside_hispanic_rate),
-                   us_total_white_alone_rate = as.numeric(us_total_white_alone_rate),
-                   us_in_state_white_alone_rate = as.numeric(us_in_state_white_alone_rate),
-                   us_out_state_white_alone_rate = as.numeric(us_out_state_white_alone_rate),
-                   us_outside_white_alone_rate = as.numeric(us_outside_white_alone_rate),
-                   us_total_race_rate = as.numeric(us_total_race_rate),
-                   us_in_state_race_rate = as.numeric(us_in_state_race_rate),
-                   us_out_state_race_rate = as.numeric(us_out_state_race_rate),
-                   us_outside_race_rate = as.numeric(us_outside_race_rate),
-                   us_total_white_rate = as.numeric(us_total_white_rate),
-                   us_in_state_white_rate = as.numeric(us_in_state_white_rate),
-                   us_out_state_white_rate = as.numeric(us_out_state_white_rate),
-                   us_outside_white_rate = as.numeric(us_outside_white_rate),
-                   us_total_black_rate = as.numeric(us_total_black_rate),
-                   us_in_state_black_rate = as.numeric(us_in_state_black_rate),
-                   us_out_state_black_rate = as.numeric(us_out_state_black_rate),
-                   us_outside_black_rate = as.numeric(us_outside_black_rate),
-                   us_total_american_indian_rate = as.numeric(us_total_american_indian_rate),
-                   us_in_state_american_indian_rate = as.numeric(us_in_state_american_indian_rate),
-                   us_out_state_american_indian_rate = as.numeric(us_out_state_american_indian_rate),
-                   us_outside_american_indian_rate = as.numeric(us_outside_american_indian_rate),
-                   us_total_asian_rate = as.numeric(us_total_asian_rate),
-                   us_in_state_asian_rate = as.numeric(us_in_state_asian_rate),
-                   us_out_state_asian_rate = as.numeric(us_out_state_asian_rate),
-                   us_outside_asian_rate = as.numeric(us_outside_asian_rate),
-                   us_total_native_hawaiian_rate = as.numeric(us_total_native_hawaiian_rate),
-                   us_in_state_native_hawaiian_rate = as.numeric(us_in_state_native_hawaiian_rate),
-                   us_out_state_native_hawaiian_rate = as.numeric(us_out_state_native_hawaiian_rate),
-                   us_outside_native_hawaiian_rate = as.numeric(us_outside_native_hawaiian_rate),
-                   us_total_other_rate = as.numeric(us_total_other_rate),
-                   us_in_state_other_rate = as.numeric(us_in_state_other_rate),
-                   us_out_state_other_rate = as.numeric(us_out_state_other_rate),
-                   us_outside_other_rate = as.numeric(us_outside_other_rate))]
-
-# Create certain groups
-d_race_us[ , `:=` (us_total_other_rate = us_total_american_indian_rate + us_total_asian_rate + us_total_native_hawaiian_rate + us_total_other_rate)]
-d_race_us[ , `:=` (us_total_nonwhite_rate = us_total_black_rate + us_total_hispanic_rate + us_total_asian_rate + us_total_other_rate)]
-
-# Left join to full data
-d_full <- merge(x = d_full, y = d_race_us, by = 'censusid', all.x = TRUE)
-head(d_full)
-```
-
-
-## Race in Puerto Rico
-
-```{r}
-# Read data
-d_race_pr <-read_data(file = '../data/census-tract/raw/race-pr.csv')
-d_race_pr
-
-# Rename fields
-setnames(d_race_pr, old = c('Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Native; born in Puerto Rico!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Native; born in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Black or African American',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Native; born in Puerto Rico!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Native; born in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!American Indian and Alaska Native',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Native; born in Puerto Rico!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Native; born in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Asian',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Native; born in Puerto Rico!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Native; born in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Native Hawaiian and Other Pacific Islander',
-'Estimate!!Total!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race',
-'Estimate!!Native; born in Puerto Rico!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race',
-'Estimate!!Native; born in the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race',
-'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!RACE AND HISPANIC OR LATINO ORIGIN!!One race!!Some other race',
-'Estimate!!Total!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Native; born in Puerto Rico!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Native; born in the U.S.!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!Hispanic or Latino origin (of any race)',
-'Estimate!!Total!!Total population!!White alone, not Hispanic or Latino',
-'Estimate!!Native; born in Puerto Rico!!Total population!!White alone, not Hispanic or Latino',
-'Estimate!!Native; born in the U.S.!!Total population!!White alone, not Hispanic or Latino',
-'Estimate!!Native; born outside Puerto Rico and the U.S.!!Total population!!White alone, not Hispanic or Latino'),
-                      new = c('pr_total_black_rate',
-                              'pr_born_in_black_rate',
-                              'pr_born_us_black_rate',
-                              'pr_born_outside_black_rate',
-                              'pr_total_american_indian_rate',
-                              'pr_born_in_american_indiane_rate',
-                              'pr_born_us_american_indian_rate',
-                              'pr_born_outside_american_indian_rate',
-                              'pr_total_asian_rate',
-                              'pr_born_in_asian_rate',
-                              'pr_born_us_asian_rate',
-                              'pr_born_outside_asian_rate',
-                              'pr_total_native_hawaiian_rate',
-                              'pr_born_in_native_hawaiian_rate',
-                              'pr_born_us_native_hawaiian_rate',
-                              'pr_born_outside_native_hawaiian_rate',
-                              'pr_total_other_rate',
-                              'pr_born_in_other_rate',
-                              'pr_born_us_other_rate',
-                              'pr_born_outside_other_rate',
-                              'pr_total_hispanic_rate',
-                              'pr_born_in_hispanic_rate',
-                              'pr_born_us_hispanic_rate',
-                              'pr_born_outside_hispanic_rate',
-                              'pr_total_white_alone_rate',
-                              'pr_born_in_white_alone_rate',
-                              'pr_born_us_white_alone_rate',
-                              'pr_born_outside_white_alone_rate'))
-
-# Keep required fields
-d_race_pr <- d_race_pr[ , c('censusid',
-                            'pr_total_black_rate',
-                            'pr_born_in_black_rate',
-                            'pr_born_us_black_rate',
-                            'pr_born_outside_black_rate',
-                            'pr_total_american_indian_rate',
-                            'pr_born_in_american_indiane_rate',
-                            'pr_born_us_american_indian_rate',
-                            'pr_born_outside_american_indian_rate',
-                            'pr_total_asian_rate',
-                            'pr_born_in_asian_rate',
-                            'pr_born_us_asian_rate',
-                            'pr_born_outside_asian_rate',
-                            'pr_total_native_hawaiian_rate',
-                            'pr_born_in_native_hawaiian_rate',
-                            'pr_born_us_native_hawaiian_rate',
-                            'pr_born_outside_native_hawaiian_rate',
-                            'pr_total_other_rate',
-                            'pr_born_in_other_rate',
-                            'pr_born_us_other_rate',
-                            'pr_born_outside_other_rate',
-                            'pr_total_hispanic_rate',
-                            'pr_born_in_hispanic_rate',
-                            'pr_born_us_hispanic_rate',
-                            'pr_born_outside_hispanic_rate',
-                            'pr_total_white_alone_rate',
-                            'pr_born_in_white_alone_rate',
-                            'pr_born_us_white_alone_rate',
-                            'pr_born_outside_white_alone_rate')]
-
-# Convert to numeric
-d_race_pr[ , `:=` (pr_total_black_rate = as.numeric(pr_total_black_rate),
-                   pr_born_in_black_rate = as.numeric(pr_born_in_black_rate),
-                   pr_born_us_black_rate = as.numeric(pr_born_us_black_rate),
-                   pr_born_outside_black_rate = as.numeric(pr_born_outside_black_rate),
-                   pr_total_american_indian_rate = as.numeric(pr_total_american_indian_rate),
-                   pr_born_in_american_indiane_rate = as.numeric(pr_born_in_american_indiane_rate),
-                   pr_born_us_american_indian_rate = as.numeric(pr_born_us_american_indian_rate),
-                   pr_born_outside_american_indian_rate = as.numeric(pr_born_outside_american_indian_rate),
-                   pr_total_asian_rate = as.numeric(pr_total_asian_rate),
-                   pr_born_us_asian_rate = as.numeric(pr_born_us_asian_rate),
-                   pr_born_outside_asian_rate = as.numeric(pr_born_outside_asian_rate),
-                   pr_total_native_hawaiian_rate = as.numeric(pr_total_native_hawaiian_rate),
-                   pr_born_in_native_hawaiian_rate = as.numeric(pr_born_in_native_hawaiian_rate),
-                   pr_born_us_native_hawaiian_rate = as.numeric(pr_born_us_native_hawaiian_rate),
-                   pr_born_outside_native_hawaiian_rate = as.numeric(pr_born_outside_native_hawaiian_rate),
-                   pr_total_other_rate = as.numeric(pr_total_other_rate),
-                   pr_born_in_other_rate = as.numeric(pr_born_in_other_rate),
-                   pr_born_us_other_rate = as.numeric(pr_born_us_other_rate),
-                   pr_born_outside_other_rate = as.numeric(pr_born_outside_other_rate),
-                   pr_total_hispanic_rate = as.numeric(pr_total_hispanic_rate),
-                   pr_born_in_hispanic_rate = as.numeric(pr_born_in_hispanic_rate),
-                   pr_born_us_hispanic_rate = as.numeric(pr_born_us_hispanic_rate),
-                   pr_born_outside_hispanic_rate = as.numeric(pr_born_outside_hispanic_rate),
-                   pr_total_white_alone_rate = as.numeric(pr_total_white_alone_rate),
-                   pr_born_in_white_alone_rate = as.numeric(pr_born_in_white_alone_rate),
-                   pr_born_us_white_alone_rate = as.numeric(pr_born_us_white_alone_rate),
-                   pr_born_outside_white_alone_rate = as.numeric(pr_born_outside_white_alone_rate))]
-
-# Create certain groups
-d_race_pr[ , `:=` (pr_total_other_rate = pr_total_american_indian_rate + pr_total_asian_rate + pr_total_native_hawaiian_rate + pr_total_other_rate)]
-d_race_pr[ , `:=` (pr_total_nonwhite_rate = pr_total_black_rate + pr_total_hispanic_rate + pr_total_asian_rate + pr_total_other_rate)]
-
-# Left join to full data
-d_full <- merge(x = d_full, y = d_race_pr, by = 'censusid', all.x = TRUE)
-
-# Combined US/PR rates into single race
-d_full[ ,`:=` (total_white_alone_rate = ifelse(substr(tractid,1,2) == '72', pr_total_white_alone_rate/100, us_total_white_alone_rate/100),
-                total_black_rate = ifelse(substr(tractid,1,2) == '72', pr_total_black_rate/100, us_total_black_rate/100),
-                total_hispanic_rate = ifelse(substr(tractid,1,2) == '72', pr_total_hispanic_rate/100, us_total_hispanic_rate/100),
-                total_other_rate = ifelse(substr(tractid,1,2) == '72', pr_total_other_rate/100, us_total_other_rate/100),
-                total_nonwhite_rate = ifelse(substr(tractid,1,2) == '72', pr_total_nonwhite_rate/100, us_total_nonwhite_rate/100))]
-
-head(d_full)
-```
-
-
 ## Nativity and Citizenship
 
 ```{r}
@@ -1247,12 +935,25 @@ d_full <- d_full %>%
   select(gisjoin, everything()) %>%
   select(censusid, everything())
 
-tail(d_full)
+head(d_full)
 ```
+
 
 ```{r}
 # Write to csv
 fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
+```
+
+## Omit Record with NAs
+
+```{r}
+# Write to csv
+d_trim <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
+
+d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate'))
+
+# Write to csv
+fwrite(d_trim, file = '../data/census-tract/census-tract-demographics-trim.csv')
 ```
 
 
@@ -1427,20 +1128,6 @@ head(d_full)
 # Write to csv
 fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
 ```
-
-## Omit Record with NAs
-
-```{r}
-# Write to csv
-d_trim <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
-
-d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate'))
-
-# Write to csv
-fwrite(d_trim, file = '../data/census-tract/census-tract-demographics-trim.csv')
-```
-
-
 
 
 # Disaster Vulnerability Index (no income)
