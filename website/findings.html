@@ -14,8 +14,8 @@
 
       /* Set extra padding for main-content */
       .main-content {
-        padding-left: 140px;
-        padding-right: 140px;
+        padding-left: 380px;
+        padding-right: 100px;
       }
 
       .header {
@@ -27,14 +27,20 @@
 
 
       /* Set height of the grid so .sidenav can be 100% (adjust as needed) */
-      .row.content {
+      .row {
         height: 100vh;
       }
 
       /* Set gray background color and 100% height */
       .sidenav {
+        width: 260px;
         background-color: #f1f1f1;
-        height: 100vh;
+        height: 100%;
+        position: fixed;
+        z-index: 1000;
+        overflow-x: hidden;
+        display: block;
+        padding: 20px;
       }
 
       .sidenav li {
@@ -72,9 +78,36 @@
         align:
       }
 
+      .num-callout {
+        display: block;
+      }
+
+      .num-callout h1 {
+        font-size: 6rem;
+        text-align: center;
+        margin-bottom: 0;
+      }
+
+      .num-callout p {
+        font-size: 120%;
+        text-align: center;
+      }
+
+      .tableau-viz {
+        align: center;
+      }
+
+      .tableau-viz iframe {
+        width: 80%;
+        height: 800px;
+        display: block;
+        margin-left: 50px;
+        margin-right: auto;
+      }
+
       /* Make logo fit width of nav bar */
       #logo {
-        max-width: 100%;
+        max-width:100%;
         display: block;
         margin-left: auto;
         margin-right: auto;
@@ -83,6 +116,15 @@
       /* On small screens, set height to 'auto' for the grid */
       @media screen and (max-width: 767px) {
         .row.content {height: auto;}
+        .header {
+          padding-left: 300px;
+          padding-right: 40px;
+        }
+        .main-content {
+          padding-right: 40px;
+          padding-left: 300px;
+        }
+        }
       }
     </style>
   </head>
@@ -112,24 +154,26 @@
     </nav>
 
     <div class="container-fluid">
-      <div class="row content">
-        <div class="col-sm-2 sidenav hidden-xs">
+      <div class="row">
+        <div class="sidenav">
           <br>
           <img id="logo" src="bluetarp-logo1.png" alt="Project Blue Tarp logo">
           <br>
           <ul class="nav nav-pills nav-stacked">
             <li><a href="index.html">Home</a></li>
             <li><a href="data-intro.html">Our Data</a></li>
-            <li ><a href="approach.html">Our Approach</a></li>
+            <li><a href="approach.html">Our Approach</a></li>
             <li class="active"><a href="findings.html">Findings</a></li>
             <li><a href="conclusion.html">Conclusion</a></li>
             <li><a href="contact.html">Contact</a></li>
           </ul><br>
-        </div>
         <br>
-        <div class="col-sm-10 header">
-        </div>
-        <div class="col-sm-10 main-content">
+      </div>
+
+      <div class="col-sm-12 header">
+      </div>
+      <div class="col-sm-12 main-content">
+        <div class="title">
           <h1>Findings</h1>
           <p>This is placeholder text.</p>
         </div>
