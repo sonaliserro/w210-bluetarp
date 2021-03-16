@@ -47,7 +47,7 @@ d_county <- d_demo[ , .(occupied_housing_units_rate = sum(occupied_housing_units
                         vacant_housing_units_rate = sum(vacant_housing_units) / (sum(occupied_housing_units) + sum(vacant_housing_units)),
                         owner_occupied_rate = sum(owner_occupied)/sum(tenure_occupied_housing_units)), keyby = c('fips', 'county')]
 
-head(d_county)
+tail(d_county)
 ```
 
 ## HUD Fair Market Rates
