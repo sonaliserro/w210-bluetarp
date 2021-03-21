@@ -1,0 +1,239 @@
+---
+title: 'Census Tract DVI'
+subtitle: 'Florida, Texas, Puerto Rico'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(tidyr)
+library(data.table)
+library(ggplot2)
+library(ggcorrplot)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+# Disaster Vulnerability Index
+
+```{r}
+# Read in data
+d_census <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding='UTF-8')
+
+# Keep key demographics
+d_census <- d_census[ , c('censusid',
+                          'below_poverty_rate',
+                          'unemployed_labor_rate',
+                          'median_earnings_total',
+                          'owner_occupied_rate',
+                          'built_1979_or_earlier_rate', 'built_1980_or_later_rate')]
+
+# Add state abbreviation
+d_census[ ,`:=` (state = ifelse(substr(censusid, 10, 11) == '12', 'FL', 
+                          ifelse(substr(censusid, 10, 11) == '37', 'NC',
+                          ifelse(substr(censusid, 10, 11) == '48', 'TX',
+                          ifelse(substr(censusid, 10, 11) == '72', 'PR', NA )))))]
+
+head(d_census)
+summary(d_census)
+
+# Select rows with any NAs
+d_census[rowSums(is.na(d_census)) > 0, ]
+```
+
+## Helper functions
+
+```{r}
+# Percentile ranking function
+percent_rank_asc <- function(x) trunc((rank(x)-1))/(length(x)-1)
+percent_rank_desc <- function(x) trunc((rank(desc(x))-1))/(length(x)-1)
+```
+
+```{r}
+# Min-max scaling
+normalize <- function(x) {
+    return((x- min(x)) /(max(x)-min(x)))
+}
+```
+
+```{r}
+# Calculate DVI
+calculate_dvi <- function(d = d_census, state_val = 'all') {
+  
+  # Select all or specific states
+  if (state_val == 'all') {
+    d_state <- d
+  } else {
+    # Select state
+    d_state <- d[state == state_val, ]
+  }
+  
+  ### Poverty Rate ###
+  # Drop NAs
+  d_valid <- d[!is.na(below_poverty_rate), c('censusid', 'below_poverty_rate')]
+  
+  # Calculate percentile rank
+  d_valid <- within(d_valid, 'poverty_rank' <- percent_rank_asc(d_valid$below_poverty_rate))
+  d_valid <- d_valid[ , c('censusid', 'poverty_rank')]
+  d_rank <- merge(x = d_state, y = d_valid, by = 'censusid', all.x = TRUE)
+  
+  
+  ### Unemployed Rate ###
+  # Drop NAs
+  d_valid <- d[!is.na(unemployed_labor_rate), c('censusid', 'unemployed_labor_rate')]
+  
+  # Calculate percentile rank
+  d_valid <- within(d_valid, 'unemployed_rank' <- percent_rank_asc(d_valid$unemployed_labor_rate))
+  d_valid <- d_valid[ , c('censusid', 'unemployed_rank')]
+  d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+  
+  
+  ### Median Earnings ###
+  # Drop NAs
+  d_valid <- d[!is.na(median_earnings_total), c('censusid', 'median_earnings_total')]
+  
+  # Calculate percentile rank
+  d_valid <- within(d_valid, 'earnings_rank' <- percent_rank_desc(d_valid$median_earnings_total))
+  d_valid <- d_valid[ , c('censusid', 'earnings_rank')]
+  d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+  
+  
+  ### Owner Occupied Rate ###
+  # Drop NAs
+  d_valid <- d[!is.na(owner_occupied_rate), c('censusid', 'owner_occupied_rate')]
+  
+  # Calculate percentile rank
+  d_valid <- within(d_valid, 'owner_rank' <- percent_rank_asc(d_valid$owner_occupied_rate))
+  d_valid <- d_valid[ , c('censusid', 'owner_rank')]
+  d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+  
+  
+  ### House Built Year ###
+  # Drop NAs
+  d_valid <- d[!is.na(built_1979_or_earlier_rate), c('censusid', 'built_1979_or_earlier_rate')]
+  
+  # Calculate percentile rank
+  d_valid <- within(d_valid, 'house_old_rank' <- percent_rank_asc(d_valid$built_1979_or_earlier_rate))
+  d_valid <- d_valid[ , c('censusid', 'house_old_rank')]
+  d_rank <- merge(x = d_rank, y = d_valid, by = 'censusid', all.x = TRUE)
+  
+  
+  ### Vulnerability Index ###
+  # Raw Disaster Vulnerability Index (SVI)
+  d_rank[ ,`:=` (dvi_raw = poverty_rank + unemployed_rank + earnings_rank + owner_rank + house_old_rank)]
+  
+  # Keep ranks and index
+  d_trim <- d_rank[ , c('censusid', 'poverty_rank', 'unemployed_rank', 'earnings_rank',
+                        'owner_rank', 'house_old_rank', 'dvi_raw')]
+  
+  # Remove rows with NAs
+  d_trim <- na.omit(d_trim)
+  
+  # Scale SDI
+  d_trim$dvi <- normalize(d_trim$dvi_raw)
+  
+  # Census Tract ID
+  d_trim[ , `:=` (tractid = substr(censusid, 10, 22))]
+
+  # Reorder variables
+  d_trim <- d_trim %>%
+    select(tractid, everything()) %>%
+    select(censusid, everything())
+
+  head(d_trim)
+  
+  return(d_trim)
+}
+
+```
+
+## DVI for FL/TX/PR Combined
+
+```{r}
+# Drop NC
+d_full <- d_census[state %in% c('FL', 'TX', 'PR')]
+
+# Calculate DVI
+d_dvi <- calculate_dvi(d = d_full, state_val = 'all')
+
+head(d_dvi)
+```
+
+
+```{r fig.width=11, fig.height=3.5}
+# Raw DVI
+p_raw <- ggplot(d_dvi, aes(x=dvi_raw)) + 
+  geom_density() +
+  ggtitle('Raw Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Raw DVI')
+
+# Scaled DVI
+p_scaled <- ggplot(d_dvi, aes(x=dvi)) + 
+  geom_density() +
+  ggtitle('Scaled Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Scaled DVI')
+
+grid.arrange(p_raw, p_scaled, ncol = 2)
+```
+
+```{r}
+# Write to csv
+fwrite(d_dvi, file = '../data/census-tract/census-tract-dvi.csv')
+```
+
+
+
+## DVI for FL/TX/PR Combined
+
+```{r}
+# Calculate DVI for each state
+d_florida <- calculate_dvi(d = d_full, state_val = 'FL')
+d_texas <- calculate_dvi(d = d_full, state_val = 'TX')
+d_puerto <- calculate_dvi(d = d_full, state_val = 'PR')
+
+# Combine states
+d_full <- rbind(d_florida, d_texas, d_puerto)
+
+head(d_full)
+```
+
+```{r fig.width=11, fig.height=3.5}
+# Raw DVI
+p_raw <- ggplot(d_full, aes(x=dvi_raw)) + 
+  geom_density() +
+  ggtitle('Raw Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Raw DVI')
+
+# Scaled DVI
+p_scaled <- ggplot(d_full, aes(x=dvi)) + 
+  geom_density() +
+  ggtitle('Scaled Disaster Index') +
+  theme_minimal() +
+  labs(x = 'Scaled DVI')
+
+grid.arrange(p_raw, p_scaled, ncol = 2)
+```
+
+```{r}
+# Write to csv
+fwrite(d_full, file = '../data/census-tract/census-tract-dvi-individual.csv')
+```
+
