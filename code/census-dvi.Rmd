@@ -85,7 +85,7 @@ calculate_dvi <- function(d = d_census, state_val = 'all') {
   
   ### Poverty Rate ###
   # Drop NAs
-  d_valid <- d[!is.na(below_poverty_rate), c('censusid', 'below_poverty_rate')]
+  d_valid <- d_state[!is.na(below_poverty_rate), c('censusid', 'below_poverty_rate')]
   
   # Calculate percentile rank
   d_valid <- within(d_valid, 'poverty_rank' <- percent_rank_asc(d_valid$below_poverty_rate))
@@ -95,7 +95,7 @@ calculate_dvi <- function(d = d_census, state_val = 'all') {
   
   ### Unemployed Rate ###
   # Drop NAs
-  d_valid <- d[!is.na(unemployed_labor_rate), c('censusid', 'unemployed_labor_rate')]
+  d_valid <- d_state[!is.na(unemployed_labor_rate), c('censusid', 'unemployed_labor_rate')]
   
   # Calculate percentile rank
   d_valid <- within(d_valid, 'unemployed_rank' <- percent_rank_asc(d_valid$unemployed_labor_rate))
@@ -105,7 +105,7 @@ calculate_dvi <- function(d = d_census, state_val = 'all') {
   
   ### Median Earnings ###
   # Drop NAs
-  d_valid <- d[!is.na(median_earnings_total), c('censusid', 'median_earnings_total')]
+  d_valid <- d_state[!is.na(median_earnings_total), c('censusid', 'median_earnings_total')]
   
   # Calculate percentile rank
   d_valid <- within(d_valid, 'earnings_rank' <- percent_rank_desc(d_valid$median_earnings_total))
@@ -115,7 +115,7 @@ calculate_dvi <- function(d = d_census, state_val = 'all') {
   
   ### Owner Occupied Rate ###
   # Drop NAs
-  d_valid <- d[!is.na(owner_occupied_rate), c('censusid', 'owner_occupied_rate')]
+  d_valid <- d_state[!is.na(owner_occupied_rate), c('censusid', 'owner_occupied_rate')]
   
   # Calculate percentile rank
   d_valid <- within(d_valid, 'owner_rank' <- percent_rank_asc(d_valid$owner_occupied_rate))
@@ -125,7 +125,7 @@ calculate_dvi <- function(d = d_census, state_val = 'all') {
   
   ### House Built Year ###
   # Drop NAs
-  d_valid <- d[!is.na(built_1979_or_earlier_rate), c('censusid', 'built_1979_or_earlier_rate')]
+  d_valid <- d_state[!is.na(built_1979_or_earlier_rate), c('censusid', 'built_1979_or_earlier_rate')]
   
   # Calculate percentile rank
   d_valid <- within(d_valid, 'house_old_rank' <- percent_rank_asc(d_valid$built_1979_or_earlier_rate))
