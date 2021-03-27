@@ -1,0 +1,200 @@
+---
+title: 'Socially Vulnerable Populations and Susceptibility to Damages'
+subtitle: 'Post-Analysis of Puerto Rico'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+# Exploratory Data Analysis
+
+```{r}
+# Read data in PR
+d_puerto <- fread(file = '../data/open-fema/FEMA-Large-Demographics-WindSpeed-PR.csv', fill = TRUE, encoding = 'UTF-8')
+
+# Convert variables names to lower case
+names(d_puerto) <- tolower(names(d_puerto))
+
+nrow(d_puerto)
+```
+
+```{r}
+# FEMA variables with missing values
+na_counts <- round(head(sort(colSums(is.na(d_puerto)), decreasing = TRUE), 4)*100 / nrow(d_puerto), 1)
+
+# Parse cols and vals for table
+cols <- names(na_counts)
+vals <- na_counts[cols]
+
+# Create tables
+data.table(variable = cols,
+           missing_rate = vals)
+```
+
+```{r}
+# Reformatting variables
+d_puerto[ ,`:=` (personalpropertyeligible = ifelse(personalpropertyeligible == TRUE, 1, 0),
+                 tsacheckedin = ifelse(tsacheckedin == TRUE, 1, 0),
+                 pwg_full_mph = ifelse(is.na(pwg_mph), pwg_county_avg_mph, pwg_mph))]
+
+# Calculate total damages
+d_puerto[ , `:=` (damageamount = rpfvl + ppfvl)]
+
+# Check missing peak wind gusts
+head(d_puerto[is.na(pwg_mph), c('censustractid', 'pwg_mph', 'pwg_county_avg_mph', 'pwg_full_mph')])
+```
+
+
+```{r}
+# Eligibility status and damage estimates
+d_status <- d_puerto[ , .(count = .N, rpfvl = sum(rpfvl), ppfvl = sum(ppfvl), damageamount = sum(damageamount)),
+                          keyby = c('inspected', 'repairassistanceeligible', 'replacementassistanceeligible', 'rentalassistanceeligible')]
+
+# Summarize status
+d_status[ , `:=` (status = ifelse(inspected == 0, 'Not inspected',
+                              ifelse(inspected == 1
+                                     & repairassistanceeligible == 0
+                                     & replacementassistanceeligible == 0
+                                     & rentalassistanceeligible == 0, 'Inspected, not eligible', 'Eligible')))]
+
+# Reorder variables - status summary to front
+(d_status <- d_status %>% select(status, everything()))
+```
+
+```{r}
+# Grand totals
+total_count <- sum(d_status$count)
+total_damages <- sum(d_status$damageamount)
+
+# Status as % of total
+d_status[ , .(record_percent = round(100*sum(count)/total_count, 1),
+              damages_percent = round(100*sum(damageamount)/total_damages, 1)), keyby=status]
+```
+
+```{r}
+head(d_puerto)
+```
+
+
+## Census Tract Aggregation
+
+```{r warning=FALSE}
+# Aggregate to Census tract level
+d_fema <- d_puerto[ , .(householdcomposition = as.numeric(mean(householdcomposition)),
+                        specialneeds = sum(specialneeds),
+                        homeownersinsurance = sum(homeownersinsurance),
+                        floodinsurance = sum(floodinsurance),
+                        inspected = as.numeric(sum(inspected)),
+                        rpfvl = sum(rpfvl),
+                        habitabilityrepairsrequired = sum(habitabilityrepairsrequired),
+                        destroyed = sum(destroyed),
+                        waterlevel = as.numeric(mean(waterlevel)),
+                        flooddamage = sum(flooddamage),
+                        foundationdamage = sum(foundationdamage),
+                        roofdamage = sum(roofdamage),
+                        roofdamageamount = sum(roofdamageamount),
+                        tsaeligible = sum(tsaeligible),
+                        tsacheckedin = sum(tsacheckedin),
+                        rentalassistanceeligible = sum(rentalassistanceeligible),
+                        rentalassistanceamount = sum(rentalassistanceamount),
+                        repairassistanceeligible = sum(repairassistanceeligible),
+                        repairamount = sum(repairamount),
+                        replacementassistanceeligible = sum(replacementassistanceeligible),
+                        replacementamount = sum(replacementamount),
+                        sbaeligible = sum(sbaeligible),
+                        primaryresidence = sum(primaryresidence),
+                        personalpropertyeligible = sum(personalpropertyeligible),
+                        ppfvl = sum(ppfvl),
+                        damageamount = sum(damageamount),
+                        total_population = mean(total_population),
+                        below_poverty_rate = mean(below_poverty_rate),
+                        median_earnings_total = mean(median_earnings_total),
+                        unemployed_labor_rate = mean(unemployed_labor_rate),
+                        built_1979_or_earlier_rate = mean(built_1979_or_earlier_rate),
+                        owner_occupied_rate = mean(owner_occupied_rate),
+                        pwg_mph = mean(pwg_mph, na.rm= TRUE),
+                        pwg_county_avg_mph = mean(pwg_mph, na.rm= TRUE),
+                        pwg_full_mph = mean(pwg_full_mph),
+                        damagemount = sum(damageamount)), keyby = c('state', 'county_fips', 'censustractid')]
+
+head(d_fema)
+```
+
+## HAVE NOT PROCEEDED BEYOND THIS POINT !!!!
+
+```{r}
+#Post-analysis tasks/considerations
+#remove florida cases from file
+#drop grossincome?
+#need to remove NAs when taking mean of demos?
+```
+
+
+## Calculate Rates
+
+```{r}
+# Calculate per capita and means
+# d_fema[ , `:=` (haamount_capita = haamount/total_population,
+#                 rentalassistanceamount_capita = rentalassistanceamount/total_population,
+#                 repairamount_capita = repairamount/total_population,
+#                 replacementamount_capita = replacementamount/total_population,
+#                 roofdamageamount_capita = roofdamageamount/total_population,
+#                 rpfvl_capita = rpfvl/total_population,
+#                 ppfvl_capita = ppfvl/total_population,
+#                 inspected_capita = inspected/total_population,
+#                 destroyed_capita = destroyed/total_population,
+#                 flooddamage_capita = flooddamage/total_population,
+#                 roofdamage_capita = roofdamage/total_population,
+#                 tsaeligible_capita = tsaeligible/total_population,
+#                 tsacheckedin_capita = tsacheckedin/total_population,
+#                 rentalassistanceeligible_capita = rentalassistanceeligible/total_population,
+#                 repairassistanceeligible_capita = repairassistanceeligible/total_population,
+#                 replacementassistanceeligible_capita = replacementassistanceeligible/total_population,
+#                 sbaeligible_capita = sbaeligible/total_population,
+#                 primaryresidence_capita = primaryresidence/total_population,
+#                 personalpropertyeligible_capita = personalpropertyeligible/total_population,
+#                 habitabilityrepairsrequired_capita = habitabilityrepairsrequired/total_population,
+#                 assistancegap_capita = assistancegap/total_population,
+#                 ownrent_owner_capita = ownrent_owner/total_population,
+#                 ownrent_renter_capita = ownrent_renter/total_population,
+#                 ownrent_unknown_capita = ownrent_unknown/total_population,
+#                 residencetype_apartment_capita = residencetype_apartment/total_population,
+#                 residencetype_condo_capita = residencetype_condo/total_population,
+#                 residencetype_houseduplex_capita = residencetype_houseduplex/total_population,
+#                 residencetype_mobilehome_capita = residencetype_mobilehome/total_population,
+#                 residencetype_townhouse_capita = residencetype_townhouse/total_population,
+#                 residencetype_other_capita = residencetype_other/total_population)]
+# 
+# d_fema
+```
+
+
+```{r}
+# Write to csv  
+#fwrite(d_full, file = '../data/census-tract/FEMA-large-tract-rates-PR.csv')
+```
+
+
+
+
