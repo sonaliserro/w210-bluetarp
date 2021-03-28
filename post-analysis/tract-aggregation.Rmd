@@ -1,0 +1,256 @@
+---
+title: 'Socially Vulnerable Populations and Susceptibility to Damages'
+subtitle: 'Census Tract Aggregation Pre-Analysis'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(tidyr)
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+library(knitr)
+```
+
+# Exploratory Data Analysis
+
+```{r}
+# Read data in PR
+d_puerto <- fread(file = '../data/open-fema/FEMA-Large-Demographics-WindSpeed-PR.csv', fill = TRUE, encoding = 'UTF-8')
+paste('Total rows:', nrow(d_puerto))
+
+# Convert variables names to lower case
+names(d_puerto) <- tolower(names(d_puerto))
+
+# Keep PR cases only
+d_puerto <- d_puerto[state =='Puerto Rico', ]
+paste('PR only rows:', nrow(d_puerto))
+```
+
+```{r}
+# FEMA variables with missing values
+na_counts <- round(head(sort(colSums(is.na(d_puerto)), decreasing = TRUE), 4)*100 / nrow(d_puerto), 1)
+
+# Parse cols and vals for table
+cols <- names(na_counts)
+vals <- na_counts[cols]
+
+# Create table
+data.table(variable = cols,
+           missing_rate = vals)
+```
+
+```{r}
+# Reformatting variables
+d_puerto[ ,`:=` (personalpropertyeligible = ifelse(personalpropertyeligible == TRUE, 1, 0),
+                 tsacheckedin = ifelse(tsacheckedin == TRUE, 1, 0),
+                 pwg_mph = ifelse(is.na(pwg_mph), pwg_county_avg_mph, pwg_mph))]
+
+# Calculate total damages
+d_puerto[ , `:=` (damageamount = rpfvl + ppfvl)]
+```
+
+
+```{r}
+# Eligibility status and damage estimates
+d_status <- d_puerto[ , .(count = .N, rpfvl = sum(rpfvl), ppfvl = sum(ppfvl), damageamount = sum(damageamount)),
+                          keyby = c('inspected', 'repairassistanceeligible', 'replacementassistanceeligible', 'rentalassistanceeligible')]
+
+# Summarize status
+d_status[ , `:=` (status = ifelse(inspected == 0, 'Not inspected',
+                              ifelse(inspected == 1
+                                     & repairassistanceeligible == 0
+                                     & replacementassistanceeligible == 0
+                                     & rentalassistanceeligible == 0, 'Inspected, not eligible', 'Eligible')))]
+
+# Reorder variables - status summary to front
+(d_status <- d_status %>% select(status, everything()))
+```
+
+```{r}
+# Grand totals
+total_count <- sum(d_status$count)
+total_damages <- sum(d_status$damageamount)
+
+# Status as % of total
+d_status[ , .(record_percent = round(100*sum(count)/total_count, 1),
+              damages_percent = round(100*sum(damageamount)/total_damages, 1)), keyby=status]
+```
+
+## Census Tract Aggregation
+
+```{r warning=FALSE}
+# Aggregate to Census tract level
+d_fema <- d_puerto[ , .(householdcomposition = as.numeric(mean(householdcomposition)),
+                        specialneeds = sum(specialneeds),
+                        homeownersinsurance = sum(homeownersinsurance),
+                        floodinsurance = sum(floodinsurance),
+                        inspected = sum(inspected),
+                        rpfvl = sum(rpfvl),
+                        habitabilityrepairsrequired = sum(habitabilityrepairsrequired),
+                        destroyed = sum(destroyed),
+                        waterlevel = as.numeric(mean(waterlevel, rm.na = TRUE)),
+                        flooddamage = sum(flooddamage),
+                        foundationdamage = sum(foundationdamage),
+                        roofdamage = sum(roofdamage),
+                        roofdamageamount = sum(roofdamageamount),
+                        tsaeligible = sum(tsaeligible),
+                        tsacheckedin = sum(tsacheckedin),
+                        rentalassistanceeligible = sum(rentalassistanceeligible),
+                        rentalassistanceamount = sum(rentalassistanceamount),
+                        repairassistanceeligible = sum(repairassistanceeligible),
+                        repairamount = sum(repairamount),
+                        replacementassistanceeligible = sum(replacementassistanceeligible),
+                        replacementamount = sum(replacementamount),
+                        sbaeligible = sum(sbaeligible),
+                        primaryresidence = sum(primaryresidence),
+                        personalpropertyeligible = sum(personalpropertyeligible),
+                        ppfvl = sum(ppfvl),
+                        total_population = mean(total_population),
+                        below_poverty_rate = mean(below_poverty_rate),
+                        median_earnings_total = mean(median_earnings_total),
+                        unemployed_labor_rate = mean(unemployed_labor_rate),
+                        built_1979_or_earlier_rate = mean(built_1979_or_earlier_rate),
+                        owner_occupied_rate = mean(owner_occupied_rate),
+                        pwg_mph = mean(pwg_mph),
+                        pwg_county_avg_mph = mean(pwg_county_avg_mph),
+                        damageamount = sum(damageamount)), keyby = c('state', 'county_fips', 'censustractid')]
+
+head(d_fema)
+```
+
+## Calculate Rates
+
+```{r}
+# Calculate per capita and means
+d_fema[ , `:=` (specialneeds_cap = specialneeds/total_population,
+                homeownersinsurance_cap = homeownersinsurance/total_population,
+                floodinsurance_cap = floodinsurance/total_population,
+                inspected_cap = inspected/total_population,
+                rpfvl_cap = rpfvl/total_population, 
+                ppfvl_cap = ppfvl/total_population,
+                damageamount_cap = damageamount/total_population,
+                habitabilityrepairsrequired_cap = habitabilityrepairsrequired/total_population,
+                destroyed_cap = destroyed/total_population,
+                flooddamage_cap = flooddamage/total_population,
+                foundationdamage_cap = foundationdamage/total_population,
+                roofdamage_cap = roofdamage/total_population,
+                roofdamageamount_cap = roofdamageamount/total_population,               
+                tsaeligible_cap = tsaeligible/total_population,
+                tsacheckedin_cap = tsacheckedin/total_population, 
+                rentalassistanceeligible_cap = rentalassistanceeligible/total_population,
+                rentalassistanceamount_cap = replacementamount/total_population,
+                repairassistanceeligible_cap = repairassistanceeligible/total_population,             
+                repairamount_cap = repairamount/total_population,                
+                replacementassistanceeligible_cap = replacementassistanceeligible/total_population,
+                replacementamount_cap = replacementamount/total_population,                
+                sbaeligible_cap = sbaeligible/total_population,
+                primaryresidence_cap = primaryresidence/total_population,
+                personalpropertyeligible_cap = personalpropertyeligible/total_population), keyby = c('state', 'county_fips', 'censustractid')]
+d_fema
+```
+
+```{r}
+# Write to csv  
+fwrite(d_fema, file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv')
+```
+
+
+## Check Distrbutions
+
+```{r}
+# Read in PR tract data
+d_fema <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv')
+```
+
+```{r, fig.width=8, fig.height=3}
+# Demographic variables
+demo_cols <- c('below_poverty_rate', 'unemployed_labor_rate', 'built_1979_or_earlier_rate', 'owner_occupied_rate')
+
+# Pivot demos longer
+demo_long <- d_fema %>%
+  pivot_longer(cols = demo_cols, names_to = 'variable', values_to = 'rates')
+
+# Demographic rates boxplot
+ggplot(demo_long, aes(variable, rates)) +
+  coord_flip() +
+  geom_boxplot(aes(fill = variable)) +
+  labs(title = 'Demographics per Capita Ranges',
+       x = '', y = 'Per capita')
+```
+
+```{r}
+# FEMA amount columns
+amount_cols <- c('rpfvl_cap', 'ppfvl_cap', 'damageamount_cap', 'roofdamageamount_cap',
+                 'rentalassistanceamount_cap', 'repairamount_cap', 'replacementamount_cap')
+
+# FEMA per capita variables (excluding amounts cols)
+fema_cols <- names(d_fema)[38:61]
+fema_cols <- setdiff(fema_cols, amount_cols)
+```
+
+```{r, fig.width=8, fig.height=4}
+# Pivot demos longer
+amount_long <- d_fema %>%
+  pivot_longer(cols = amount_cols, names_to = 'variable', values_to = 'rates')
+
+# Demographic rates boxplot
+ggplot(amount_long, aes(variable, rates)) +
+  coord_flip() +
+  geom_boxplot(aes(fill = variable)) +
+  labs(title = 'FEMA Amounts per Capita Ranges',
+       x = '', y = 'Per capita')
+```
+
+```{r, fig.width=18, fig.height=8}
+# Pivot demos longer
+fema_long <- d_fema %>%
+  pivot_longer(cols = fema_cols, names_to = 'variable', values_to = 'rates')
+
+# Demographic rates boxplot
+ggplot(fema_long, aes(variable, rates)) +
+  coord_flip() +
+  geom_boxplot(aes(fill = variable)) +
+  labs(title = 'FEMA per Capita Ranges',
+       x = 'Variable', y = 'Per capita')
+```
+
+## Missing Values
+
+```{r}
+# Water-level
+
+paste('Total tracts:', nrow(d_fema))
+
+# Raw - valid water-levels
+water_puerto <- d_puerto[waterlevel >0, .(count = .N), keyby = censustractid]
+paste('Raw FEMA - tracts with valid waterlevel:', nrow(water_puerto))
+
+# FEMA - missing water-levl
+fema_water <- d_puerto[ , .(waterlevel = mean(waterlevel, rm.na = TRUE)), keyby = censustractid]
+paste('Aggregated - tracts with missing waterlevel:', nrow(fema_water[is.na(waterlevel), ]))
+```
+
+```{r}
+# Check for NAs
+sapply(d_fema, function(x) sum(is.na(x)))
+
+# Select rows with any NAs
+#d_fema[rowSums(is.na(d_fema)) > 0, ]
+```
+
