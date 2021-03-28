@@ -63,6 +63,13 @@ d_puerto[ ,`:=` (personalpropertyeligible = ifelse(personalpropertyeligible == T
 
 # Calculate total damages
 d_puerto[ , `:=` (damageamount = rpfvl + ppfvl)]
+
+# Replace missing waterlevels
+d_puerto[ , `:=` (waterlevel = ifelse(is.na(waterlevel), 0, waterlevel))]
+
+
+# Tract with zero population
+d_puerto <- d_puerto[total_population != 0, ]
 ```
 
 
@@ -79,7 +86,7 @@ d_status[ , `:=` (status = ifelse(inspected == 0, 'Not inspected',
                                      & rentalassistanceeligible == 0, 'Inspected, not eligible', 'Eligible')))]
 
 # Reorder variables - status summary to front
-(d_status <- d_status %>% select(status, everything()))
+(d_status <- d_status %>% dplyr::select(status, everything()))
 ```
 
 ```{r}
@@ -104,7 +111,7 @@ d_fema <- d_puerto[ , .(householdcomposition = as.numeric(mean(householdcomposit
                         rpfvl = sum(rpfvl),
                         habitabilityrepairsrequired = sum(habitabilityrepairsrequired),
                         destroyed = sum(destroyed),
-                        waterlevel = as.numeric(mean(waterlevel, rm.na = TRUE)),
+                        waterlevel = as.numeric(mean(waterlevel)),
                         flooddamage = sum(flooddamage),
                         foundationdamage = sum(foundationdamage),
                         roofdamage = sum(roofdamage),
@@ -129,7 +136,7 @@ d_fema <- d_puerto[ , .(householdcomposition = as.numeric(mean(householdcomposit
                         owner_occupied_rate = mean(owner_occupied_rate),
                         pwg_mph = mean(pwg_mph),
                         pwg_county_avg_mph = mean(pwg_county_avg_mph),
-                        damageamount = sum(damageamount)), keyby = c('state', 'county_fips', 'censustractid')]
+                        damageamount = sum(damageamount)), keyby = c('state', 'county', 'county_fips', 'censustractid')]
 
 head(d_fema)
 ```
@@ -161,9 +168,41 @@ d_fema[ , `:=` (specialneeds_cap = specialneeds/total_population,
                 replacementamount_cap = replacementamount/total_population,                
                 sbaeligible_cap = sbaeligible/total_population,
                 primaryresidence_cap = primaryresidence/total_population,
-                personalpropertyeligible_cap = personalpropertyeligible/total_population), keyby = c('state', 'county_fips', 'censustractid')]
+                personalpropertyeligible_cap = personalpropertyeligible/total_population), keyby = c('state', 'county', 'county_fips', 'censustractid')]
 d_fema
 ```
+
+## Join CDC's Social Vulnerability Index (SVI)
+
+```{r}
+# Read in SVI data
+d_svi <- fread(file = '../data/census-tract/cdc-svi/SVI-PR-2016.csv', encoding = 'UTF-8')
+
+# Rename fields
+setnames(d_svi, old = c('FIPS',
+                        'RPL_THEME1',
+                        'RPL_THEME2',
+                        'RPL_THEME3',
+                        'RPL_THEME4',
+                        'RPL_THEMES'),
+                new = c('censustractid',
+                        'svi_socioeconomic',
+                        'svi_householdcomp',
+                        'svi_minority',
+                        'svi_housingtype',
+                        'svi_total'))
+
+# Keep required fields
+d_svi <- d_svi[ , c('censustractid', 'svi_socioeconomic', 'svi_householdcomp', 'svi_minority', 'svi_housingtype', 'svi_total')]
+
+# Left join to full data
+paste('Before join:', nrow(d_fema))
+d_fema <- merge(x = d_fema, y = d_svi, by = 'censustractid', all.x = TRUE)
+paste('After join:', nrow(d_fema))
+
+head(d_fema)
+```
+
 
 ```{r}
 # Write to csv  
@@ -171,12 +210,23 @@ fwrite(d_fema, file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed
 ```
 
 
-## Check Distrbutions
+## Check Missing Values
 
 ```{r}
 # Read in PR tract data
-d_fema <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv')
+d_fema <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv', encoding = 'UTF-8')
 ```
+
+```{r}
+# Check for NAs
+sapply(d_fema, function(x) sum(is.na(x)))
+
+# Select rows with any NAs (n = 5)
+#d_fema[rowSums(is.na(d_fema)) > 0, ]
+```
+
+
+## Check Distrbutions
 
 ```{r, fig.width=8, fig.height=3}
 # Demographic variables
@@ -228,29 +278,5 @@ ggplot(fema_long, aes(variable, rates)) +
   geom_boxplot(aes(fill = variable)) +
   labs(title = 'FEMA per Capita Ranges',
        x = 'Variable', y = 'Per capita')
-```
-
-## Missing Values
-
-```{r}
-# Water-level
-
-paste('Total tracts:', nrow(d_fema))
-
-# Raw - valid water-levels
-water_puerto <- d_puerto[waterlevel >0, .(count = .N), keyby = censustractid]
-paste('Raw FEMA - tracts with valid waterlevel:', nrow(water_puerto))
-
-# FEMA - missing water-levl
-fema_water <- d_puerto[ , .(waterlevel = mean(waterlevel, rm.na = TRUE)), keyby = censustractid]
-paste('Aggregated - tracts with missing waterlevel:', nrow(fema_water[is.na(waterlevel), ]))
-```
-
-```{r}
-# Check for NAs
-sapply(d_fema, function(x) sum(is.na(x)))
-
-# Select rows with any NAs
-#d_fema[rowSums(is.na(d_fema)) > 0, ]
 ```
 
