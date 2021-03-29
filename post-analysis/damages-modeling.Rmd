@@ -1,0 +1,201 @@
+---
+title: 'Socially Vulnerable Populations and Susceptibility to Damages'
+subtitle: 'Census Tract Aggregation Pre-Analysis'
+author: 'Ross MacLean'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
+---
+
+```{r}
+# Load packages
+library(car)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+library(knitr)
+
+options(scipen=999)
+```
+
+# Explortory Data Analysis
+
+```{r}
+# Read in PR data
+d <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv', encoding = 'UTF-8')
+```
+
+## FEMA Distrbutions
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Damage amount
+p_damage <- ggplot(d, aes(damageamount_cap)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Damage amount') + ylab('Frequency') +
+  ggtitle('Damage Amount per Captia')
+
+# Damage amount log
+p_damage_log <- ggplot(d, aes(log(damageamount_cap))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log damage amount') + ylab('Frequency') +
+  ggtitle('Log of Damage Amount per Captia')
+
+grid.arrange(p_damage, p_damage_log, ncol=2)
+```
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Wind speed
+p_wind <- ggplot(d, aes(pwg_mph)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Peak wind gust') + ylab('Frequency') +
+  ggtitle('Peak Wind Gust')
+
+# Wind speed log
+p_wind_log <- ggplot(d, aes(log(pwg_mph))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log peak wind gust') + ylab('Frequency') +
+  ggtitle('Log of Peak Wind Gust')
+
+grid.arrange(p_wind, p_wind_log, ncol=2)
+```
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Waterlevel
+p_water <- ggplot(d, aes(waterlevel)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+    xlab('Water-level') + ylab('Frequency') +
+    ggtitle('Water-Level')
+
+# Waterlevel log
+p_wind_log <- ggplot(d, aes(log(waterlevel))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+    xlab('Log of water-level') + ylab('Frequency') +
+    ggtitle('Log of Water-Level')
+
+grid.arrange(p_water, p_wind_log, ncol=2)
+```
+
+## Demographic Distrbutions
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Poverty
+p_poverty <- ggplot(d, aes(below_poverty_rate)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Poverty rate') + ylab('Frequency') +
+  ggtitle('Poverty Rate')
+
+# Poverty log
+p_poverty_log <- ggplot(d, aes(log(below_poverty_rate))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log poverty rate') + ylab('Frequency') +
+  ggtitle('Log of Poverty Rate')
+
+grid.arrange(p_poverty, p_poverty_log, ncol=2)
+```
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Unemployment
+p_unemploy <- ggplot(d, aes(unemployed_labor_rate)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Unemployment rate') + ylab('Frequency') +
+  ggtitle('Unemployment Rate')
+
+# Unemployment log
+p_unemploy_log <- ggplot(d, aes(log(unemployed_labor_rate))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log unemployment rate') + ylab('Frequency') +
+  ggtitle('Log of Unemployment Rate')
+
+grid.arrange(p_unemploy, p_unemploy_log, ncol=2)
+```
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Median earnings
+p_earnings <- ggplot(d, aes(median_earnings_total)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Median earnings') + ylab('Frequency') +
+  ggtitle('Median Earnings')
+
+# Median earnings log
+p_earnings_log <- ggplot(d, aes(log(median_earnings_total))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log median earnings') + ylab('Frequency') +
+  ggtitle('Log of Median Earnings')
+
+grid.arrange(p_earnings, p_earnings_log, ncol=2)
+```
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Built year
+p_built <- ggplot(d, aes(built_1979_or_earlier_rate)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Built pre-1979') + ylab('Frequency') +
+  ggtitle('House Built Pre-1979')
+
+# Built year log
+p_built_log <- ggplot(d, aes(log(built_1979_or_earlier_rate))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log built pre-1979') + ylab('Frequency') +
+  ggtitle('Log of House Built Pre-1979')
+
+grid.arrange(p_built, p_built_log, ncol=2)
+```
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Ownership
+p_owner <- ggplot(d, aes(owner_occupied_rate)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Ownership rate') + ylab('Frequency') +
+  ggtitle('Ownership Rate')
+
+# Ownership log
+p_owner_log <- ggplot(d, aes(log(owner_occupied_rate))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log ownership rate') + ylab('Frequency') +
+  ggtitle('Log of Ownership Rate')
+
+grid.arrange(p_owner, p_owner_log, ncol=2)
+```
+
+## SVI Distributions
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Missing SVIs
+#d[svi_total == -999, c('censustractid', 'svi_socioeconomic', 'svi_householdcomp', 'svi_minority', 'svi_housingtype', 'svi_total')]
+
+# SVI
+p_svi <- d %>%
+  filter(svi_total != -999) %>%
+  ggplot(aes(svi_total)) +
+    geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+    xlab('SVI') + ylab('Frequency') +
+    ggtitle('SVI')
+
+# SVI log
+p_svi_log <- d %>%
+  filter(svi_total != -999) %>%
+  ggplot(aes(log(svi_total))) +
+    geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+    xlab('Log of SVI') + ylab('Frequency') +
+    ggtitle('Log of SVI')
+
+grid.arrange(p_svi, p_svi_log, ncol=2)
+```
+
+Variables which are good candidates to log transform are:
+ - damageamount_cap
+ - waterlevel
+ - unemployment (I think)
+ - median_earnings_total
+

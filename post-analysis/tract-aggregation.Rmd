@@ -228,7 +228,7 @@ sapply(d_fema, function(x) sum(is.na(x)))
 
 ## Check Distrbutions
 
-```{r, fig.width=8, fig.height=3}
+```{r, fig.width=8, fig.height=3, warning=FALSE}
 # Demographic variables
 demo_cols <- c('below_poverty_rate', 'unemployed_labor_rate', 'built_1979_or_earlier_rate', 'owner_occupied_rate')
 
@@ -244,20 +244,21 @@ ggplot(demo_long, aes(variable, rates)) +
        x = '', y = 'Per capita')
 ```
 
+
 ```{r}
 # FEMA amount columns
 amount_cols <- c('rpfvl_cap', 'ppfvl_cap', 'damageamount_cap', 'roofdamageamount_cap',
                  'rentalassistanceamount_cap', 'repairamount_cap', 'replacementamount_cap')
 
 # FEMA per capita variables (excluding amounts cols)
-fema_cols <- names(d_fema)[38:61]
+fema_cols <- names(d_fema)[39:62]
 fema_cols <- setdiff(fema_cols, amount_cols)
 ```
 
-```{r, fig.width=8, fig.height=4}
+```{r, fig.width=8, fig.height=4, warning=FALSE}
 # Pivot demos longer
 amount_long <- d_fema %>%
-  pivot_longer(cols = amount_cols, names_to = 'variable', values_to = 'rates')
+  pivot_longer(cols = all_of(amount_cols), names_to = 'variable', values_to = 'rates')
 
 # Demographic rates boxplot
 ggplot(amount_long, aes(variable, rates)) +
@@ -268,15 +269,31 @@ ggplot(amount_long, aes(variable, rates)) +
 ```
 
 ```{r, fig.width=18, fig.height=8}
-# Pivot demos longer
+# Pivot femas longer
 fema_long <- d_fema %>%
-  pivot_longer(cols = fema_cols, names_to = 'variable', values_to = 'rates')
+  pivot_longer(cols = all_of(fema_cols), names_to = 'variable', values_to = 'rates')
 
-# Demographic rates boxplot
+# Fema rates boxplot
 ggplot(fema_long, aes(variable, rates)) +
   coord_flip() +
   geom_boxplot(aes(fill = variable)) +
   labs(title = 'FEMA per Capita Ranges',
        x = 'Variable', y = 'Per capita')
+```
+
+```{r, fig.width=8, fig.height=4, warning=FALSE}
+svi_cols <- c('svi_socioeconomic', 'svi_householdcomp', 'svi_minority', 'svi_housingtype', 'svi_total') 
+
+# Pivot SVI longer
+svi_long <- d_fema %>%
+  filter(svi_total != -999) %>%
+  pivot_longer(cols = all_of(svi_cols), names_to = 'variable', values_to = 'indices')
+
+# SVI rates boxplot
+ggplot(svi_long, aes(variable, indices)) +
+    coord_flip() +
+    geom_boxplot(aes(fill = variable)) +
+    labs(title = 'SVI Ranges',
+         x = 'Variable', y = 'Index')
 ```
 
