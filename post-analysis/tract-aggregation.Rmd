@@ -132,6 +132,7 @@ d_fema <- d_puerto[ , .(householdcomposition = as.numeric(mean(householdcomposit
                         below_poverty_rate = mean(below_poverty_rate),
                         median_earnings_total = mean(median_earnings_total),
                         unemployed_labor_rate = mean(unemployed_labor_rate),
+                        bachelors_degree_rate = mean(bachelors_degree_rate),
                         built_1979_or_earlier_rate = mean(built_1979_or_earlier_rate),
                         owner_occupied_rate = mean(owner_occupied_rate),
                         pwg_mph = mean(pwg_mph),
@@ -177,7 +178,7 @@ d_fema
 ```{r}
 # Read in SVI data
 d_svi <- fread(file = '../data/census-tract/cdc-svi/SVI-PR-2016.csv', encoding = 'UTF-8')
-
+head(d_svi)
 # Rename fields
 setnames(d_svi, old = c('FIPS',
                         'RPL_THEME1',
@@ -200,7 +201,7 @@ paste('Before join:', nrow(d_fema))
 d_fema <- merge(x = d_fema, y = d_svi, by = 'censustractid', all.x = TRUE)
 paste('After join:', nrow(d_fema))
 
-head(d_fema)
+head(d_fema, 30)
 ```
 
 
@@ -230,7 +231,7 @@ sapply(d_fema, function(x) sum(is.na(x)))
 
 ```{r, fig.width=8, fig.height=3, warning=FALSE}
 # Demographic variables
-demo_cols <- c('below_poverty_rate', 'unemployed_labor_rate', 'built_1979_or_earlier_rate', 'owner_occupied_rate')
+demo_cols <- c('below_poverty_rate', 'unemployed_labor_rate', 'bachelors_degree_rate', 'built_1979_or_earlier_rate', 'owner_occupied_rate')
 
 # Pivot demos longer
 demo_long <- d_fema %>%
@@ -286,7 +287,7 @@ svi_cols <- c('svi_socioeconomic', 'svi_householdcomp', 'svi_minority', 'svi_hou
 
 # Pivot SVI longer
 svi_long <- d_fema %>%
-  filter(svi_total != -999) %>%
+  dplyr::filter('svi_total' != -999) %>%
   pivot_longer(cols = all_of(svi_cols), names_to = 'variable', values_to = 'indices')
 
 # SVI rates boxplot
