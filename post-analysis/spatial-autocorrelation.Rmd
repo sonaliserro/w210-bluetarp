@@ -1,0 +1,84 @@
+---
+title: "spatial-autocorrelation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rgdal)    # for readOGR and others
+library(sp)       # for spatial objects
+library(dplyr)    # for working with data frames
+library(ggplot2)  # for plotting 
+library(maptools)
+```
+
+### Load the shapefiles as SpatialPolygonsDataFrame
+```{r}
+pr_tracts <- readOGR(dsn="../data/census-tract/shapefiles", layer = "cb_2017_72_tract_500k")
+# convert the GEOID to a character
+pr_tracts@data$GEOID<-as.character(pr_tracts@data$GEOID)
+```
+
+### Plot using ggplot
+```{r}
+ggtract <- fortify(pr_tracts, region = "GEOID") 
+ggplot() +
+  geom_polygon(data = ggtract, aes(x=long, y=lat))
+```
+
+### Load the fema data
+```{r}
+d_fema <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv', encoding = 'UTF-8')
+d_fema <- select(d_fema, censustractid, county, below_poverty_rate, bachelors_degree_rate, unemployed_labor_rate, owner_occupied_rate, built_1979_or_earlier_rate, waterlevel, pwg_mph, damageamount_cap)
+d_fema$censustractid <- as.character(d_fema$censustractid)
+```
+
+### Join the SpatialPolygonsDataFrame with the Dema dataframe
+```{r}
+pr_tracts_demo <- geo_join(pr_tracts_demo, d_fema, by_sp="GEOID", by_df="censustractid", how="inner")
+nrow(pr_tracts_demo)
+```
+
+### Create neighbor's
+```{r}
+nbq <- poly2nb(pr_tracts_demo)
+nblist <- nb2listw(nbq, zero.policy = T, style="W")
+summary(nbq)
+```
+
+### Plot using the plot function
+```{r}
+plot(pr_tracts_demo, border="grey60")
+plot(nbq, coordinates(pr_tracts_demo), add=TRUE, pch=".")
+```
+
+### Check Moran's I for below_poverty_rate
+```{r}
+moran.test(pr_tracts_demo$below_poverty_rate, nblist, zero.policy = T, randomisation = FALSE)
+```
+
+
+### Check Moran's I for owner_occupied_rate
+```{r}
+moran.test(pr_tracts_demo$owner_occupied_rate, nblist, zero.policy = T, randomisation = FALSE)
+```
+
+
+### Check Moran's I for pwg_mph
+```{r}
+moran.test(pr_tracts_demo$pwg_mph, nblist, zero.policy = T, randomisation = FALSE)
+```
+
+### linear regression
+```{r}
+lm_model <- lm(formula=log1p(damageamount_cap) ~ pwg_mph + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = pr_tracts_demo)
+summary(lm_model)
+shapiro.test(lm_model$residuals)
+```
+
+```{r}
+lm.morantest(lm_model, listw = nblist, zero.policy = T)
+```

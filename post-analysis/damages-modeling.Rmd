@@ -25,6 +25,10 @@ library(ggplot2)
 library(gridExtra)
 library(GGally)
 library(knitr)
+library(corrplot)
+library(lmtest)
+library(sandwich)
+library(stargazer)
 
 options(scipen=999)
 ```
@@ -121,6 +125,23 @@ grid.arrange(p_unemploy, p_unemploy_log, ncol=2)
 ```
 
 ```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Bachelors Degree
+p_bachelors_deg <- ggplot(d, aes(bachelors_degree_rate)) +
+  geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
+  xlab('Bachelors Degree') + ylab('Frequency') +
+  ggtitle('Bachelors Degree')
+
+# Median earnings log
+p_bachelors_deg_log <- ggplot(d, aes(log(bachelors_degree_rate))) +
+  geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
+  xlab('Log Bachelors Degree') + ylab('Frequency') +
+  ggtitle('Log of Bachelors Degree')
+
+grid.arrange(p_bachelors_deg, p_bachelors_deg_log, ncol=2)
+```
+
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
 # Median earnings
 p_earnings <- ggplot(d, aes(median_earnings_total)) +
   geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
@@ -176,7 +197,7 @@ grid.arrange(p_owner, p_owner_log, ncol=2)
 
 # SVI
 p_svi <- d %>%
-  filter(svi_total != -999) %>%
+  dplyr::filter('svi_total' != -999) %>%
   ggplot(aes(svi_total)) +
     geom_histogram(bins = 30, fill = '#F8766D', color = '#F6493c') +
     xlab('SVI') + ylab('Frequency') +
@@ -184,7 +205,7 @@ p_svi <- d %>%
 
 # SVI log
 p_svi_log <- d %>%
-  filter(svi_total != -999) %>%
+  dplyr::filter('svi_total' != -999) %>%
   ggplot(aes(log(svi_total))) +
     geom_histogram(bins = 30, fill = '#00BFC4', color = '#00998C') +
     xlab('Log of SVI') + ylab('Frequency') +
@@ -193,9 +214,115 @@ p_svi_log <- d %>%
 grid.arrange(p_svi, p_svi_log, ncol=2)
 ```
 
-Variables which are good candidates to log transform are:
- - damageamount_cap
- - waterlevel
- - unemployment (I think)
- - median_earnings_total
+## Damage Amount per capita by County
 
+```{r fig.height=5, fig.width=9}
+ggplot(d, aes(as.factor(county_fips), damageamount_cap)) + geom_boxplot(aes(fill = as.factor(county_fips))) +  geom_jitter(width = 0.2, size = 0.5) + 
+ggtitle("Damage Amount per capita by county") + theme(plot.title = element_text(lineheight = 1, face = "bold")) + theme(legend.position="right", legend.text=element_text(size=5), axis.text.x = element_text(angle = -90, vjust = 0.5, size = 5, face = "plain"))
+```
+
+
+## Correlations Matrix
+
+```{r}
+cor_matrix <- round(cor(d[,c('damageamount_cap', 'pwg_mph', 'waterlevel', 'below_poverty_rate', 'unemployed_labor_rate', 'bachelors_degree_rate', 'built_1979_or_earlier_rate', 'owner_occupied_rate')], use='complete.obs'), 2)
+corrplot(cor_matrix, method="square")
+```
+
+
+## Bivariate Analysis (damageamount_cap and explanatory variables)
+
+```{r fig.height=8, fig.width=10}
+plot_bivariate <- function(var, var.name) {
+  p.plot <- ggplot(d, aes(x=var, y=damageamount_cap)) + geom_point(size=2, shape=18, color="lightblue", na.rm = TRUE) + 
+    xlab(var.name) + theme(plot.title = element_text(lineheight = 1, face = "bold"))
+}
+grid.arrange(plot_bivariate(d$pwg_mph, "pwg_mph"),
+             plot_bivariate(d$pwg_saffir_simpson, "pwg_saffir_simpson"),
+             plot_bivariate(d$waterlevel, "waterlevel"),
+             plot_bivariate(d$below_poverty_rate, "below_poverty_rate"),
+             plot_bivariate(d$median_earnings_total, "median_earings_total"),
+             plot_bivariate(d$bachelors_degree_rate, "bachelors_degree_rate"),
+             plot_bivariate(d$unemployed_labor_rate, "unemployed_labor_rate"),
+             plot_bivariate(d$built_1979_or_earlier_rate, "built_1979_or_earlier_rate"),
+             plot_bivariate(d$owner_occupied_rate, "owner_occupied_rate"), 
+             plot_bivariate(d$svi_socioeconomic, "svi_socioeconomic"),
+             plot_bivariate(d$svi_householdcomp, "svi_socioeconomic"),
+             plot_bivariate(d$svi_minority, "svi_minority"),
+             plot_bivariate(d$svi_housingtype, "svi_housingtype"),
+             plot_bivariate(d$svi_total, "svi_total"), nrow=4)
+```
+
+## Bivariate Analysis (log(damageamount_cap) and explanatory variables)
+
+```{r fig.height=8, fig.width=10}
+plot_bivariate <- function(var, var.name) {
+  p.plot <- ggplot(d, aes(x=var, y=log(damageamount_cap))) + geom_point(size=2, shape=18, color="lightblue", na.rm = TRUE) + 
+    xlab(var.name) + theme(plot.title = element_text(lineheight = 1, face = "bold"))
+}
+grid.arrange(plot_bivariate(d$pwg_mph, "pwg_mph"),
+             plot_bivariate(d$pwg_saffir_simpson, "pwg_saffir_simpson"),
+             plot_bivariate(log(d$waterlevel), "waterlevel"),
+             plot_bivariate(d$below_poverty_rate, "below_poverty_rate"),
+             plot_bivariate(d$median_earnings_total, "median_earings_total"),
+             plot_bivariate(d$bachelors_degree_rate, "bachelors_degree_rate"),
+             plot_bivariate(d$unemployed_labor_rate, "unemployed_labor_rate"),
+             plot_bivariate(d$built_1979_or_earlier_rate, "built_1979_or_earlier_rate"),
+             plot_bivariate(d$owner_occupied_rate, "owner_occupied_rate"), 
+             plot_bivariate(d$svi_socioeconomic, "svi_socioeconomic"),
+             plot_bivariate(d$svi_householdcomp, "svi_socioeconomic"),
+             plot_bivariate(d$svi_minority, "svi_minority"),
+             plot_bivariate(d$svi_housingtype, "svi_housingtype"),
+             plot_bivariate(d$svi_total, "svi_total"), nrow=3)
+```
+
+
+```{r}
+model1 <- lm(formula=log1p(damageamount_cap) ~ pwg_mph + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = d)
+
+summary(model1)
+par(mfrow=c(2,2), mar=c(4.0,4.1,2.1,1.1))
+plot(model1)
+bptest(model1)
+vif(model1)
+coeftest(model1, vcov = vcovHC(model1), type='HC3')
+coeftest(model1, vcov = vcovCL(model1, cluster = d$county_fips))
+```
+
+
+```{r , results = 'asis'}
+stargazer(model1, model1,
+          type = "latex",
+          no.space = TRUE,
+          font.size = "small",
+          title = "Social Vulnerability and Susceptibility to Damages",
+          covariate.labels = c("Peak Wind Gusts (mph)", "Water Level (log)","Below Poverty Rate", "Unemployed Labor Rate", "Homes built 1979 or Earlier Rate", "Owner Occupied Rate"),
+          dep.var.labels = "Per Capita Damage Amount (Log)",
+          se = c(list(sqrt(diag(vcovHC(model1, type="HC3")))), list(sqrt(diag(vcovCL(model1, cluster=d$county_fips))))),
+          add.lines = list(c("SE Type", "Robust", "Clustered")), 
+          header = F)
+```
+
+### peak wind gust saffir simpson scale
+```{r}
+model2 <- lm(formula=log1p(damageamount_cap) ~ pwg_saffir_simpson + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = d)
+
+summary(model2)
+par(mfrow=c(2,2), mar=c(4.0,4.1,2.1,1.1))
+plot(model2)
+bptest(model2)
+vif(model2)
+coeftest(model2, vcov = vcovHC(model2), type='HC3')
+
+```
+
+### Fixed Effects
+```{r}
+model3 <- lm(formula=log1p(damageamount_cap) ~ pwg_mph + log1p(waterlevel) + factor(county), data = d)
+
+summary(model3)
+par(mfrow=c(2,2), mar=c(4.0,4.1,2.1,1.1))
+plot(model3)
+bptest(model3)
+vif(model3)
+```
