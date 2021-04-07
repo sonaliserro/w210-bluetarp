@@ -15,6 +15,7 @@ library(dplyr)    # for working with data frames
 library(ggplot2)  # for plotting 
 library(maptools) # for plotting 
 library(tigris)   # for geo_join
+library(rgeos)    # for spatial objects
 ```
 
 ### Load the shapefiles as SpatialPolygonsDataFrame
@@ -26,9 +27,9 @@ pr_tracts@data$GEOID<-as.character(pr_tracts@data$GEOID)
 
 ### Plot using ggplot
 ```{r}
-ggtract <- fortify(pr_tracts, region = "GEOID") 
-ggplot() +
-  geom_polygon(data = ggtract, aes(x=long, y=lat))
+#ggtract <- fortify(pr_tracts, region = "GEOID") 
+#ggplot() +
+#  geom_polygon(data = ggtract, aes(x=long, y=lat))
 ```
 
 ### Load the fema data
