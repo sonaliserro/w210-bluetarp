@@ -66,10 +66,17 @@ d_puerto[ , `:=` (damageamount = rpfvl + ppfvl)]
 
 # Replace missing waterlevels
 d_puerto[ , `:=` (waterlevel = ifelse(is.na(waterlevel), 0, waterlevel))]
-
+# Remove waterlevel outliers?
+d_puerto <- d_puerto[waterlevel <= 120, ]
 
 # Tract with zero population
 d_puerto <- d_puerto[total_population != 0, ]
+
+d_puerto[ , `:=` (insurance = ifelse(homeownersinsurance == 1 | floodinsurance == 1, 1, 0))]
+
+d_puerto[, c('homeownersinsurance', 'floodinsurance', 'insurance')]
+
+nrow(d_puerto)
 ```
 
 
@@ -107,6 +114,7 @@ d_fema <- d_puerto[ , .(householdcomposition = as.numeric(mean(householdcomposit
                         specialneeds = sum(specialneeds),
                         homeownersinsurance = sum(homeownersinsurance),
                         floodinsurance = sum(floodinsurance),
+                        insurance = sum(insurance),
                         inspected = sum(inspected),
                         rpfvl = sum(rpfvl),
                         habitabilityrepairsrequired = sum(habitabilityrepairsrequired),
@@ -149,6 +157,7 @@ head(d_fema)
 d_fema[ , `:=` (specialneeds_cap = specialneeds/total_population,
                 homeownersinsurance_cap = homeownersinsurance/total_population,
                 floodinsurance_cap = floodinsurance/total_population,
+                insurance_cap = insurance/total_population,
                 inspected_cap = inspected/total_population,
                 rpfvl_cap = rpfvl/total_population, 
                 ppfvl_cap = ppfvl/total_population,
@@ -172,7 +181,15 @@ d_fema[ , `:=` (specialneeds_cap = specialneeds/total_population,
                 personalpropertyeligible_cap = personalpropertyeligible/total_population), keyby = c('state', 'county', 'county_fips', 'censustractid')]
 d_fema
 ```
-
+## Calculate the saffir-simpson wind scale
+```{r}
+# Calculate saffir-simposon wind scale
+d_fema[ , `:=` (pwg_saffir_simpson = ifelse(pwg_mph <= 74, 0,
+                                     ifelse(pwg_mph > 74 & pwg_mph <= 95, 1, 
+                                                ifelse(pwg_mph > 95 & pwg_mph <= 110, 2,
+                                                       ifelse(pwg_mph > 110 & pwg_mph <= 129, 3,
+                                                              ifelse(pwg_mph > 129 & pwg_mph <= 156, 4, 5))))))]
+```
 ## Join CDC's Social Vulnerability Index (SVI)
 
 ```{r}
@@ -223,7 +240,7 @@ d_fema <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpee
 sapply(d_fema, function(x) sum(is.na(x)))
 
 # Select rows with any NAs (n = 5)
-#d_fema[rowSums(is.na(d_fema)) > 0, ]
+d_fema[rowSums(is.na(d_fema)) > 0, ]
 ```
 
 

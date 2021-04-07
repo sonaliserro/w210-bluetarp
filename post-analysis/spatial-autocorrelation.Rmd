@@ -10,9 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(rgdal)    # for readOGR and others
 library(sp)       # for spatial objects
+library(spdep)    # for modeling
 library(dplyr)    # for working with data frames
 library(ggplot2)  # for plotting 
-library(maptools)
+library(maptools) # for plotting 
+library(tigris)   # for geo_join
 ```
 
 ### Load the shapefiles as SpatialPolygonsDataFrame
@@ -38,7 +40,7 @@ d_fema$censustractid <- as.character(d_fema$censustractid)
 
 ### Join the SpatialPolygonsDataFrame with the Dema dataframe
 ```{r}
-pr_tracts_demo <- geo_join(pr_tracts_demo, d_fema, by_sp="GEOID", by_df="censustractid", how="inner")
+pr_tracts_demo <- geo_join(pr_tracts, d_fema, by_sp="GEOID", by_df="censustractid", how="inner")
 nrow(pr_tracts_demo)
 ```
 
@@ -57,19 +59,19 @@ plot(nbq, coordinates(pr_tracts_demo), add=TRUE, pch=".")
 
 ### Check Moran's I for below_poverty_rate
 ```{r}
-moran.test(pr_tracts_demo$below_poverty_rate, nblist, zero.policy = T, randomisation = FALSE)
+moran.test(pr_tracts_demo$below_poverty_rate, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
 
 ### Check Moran's I for owner_occupied_rate
 ```{r}
-moran.test(pr_tracts_demo$owner_occupied_rate, nblist, zero.policy = T, randomisation = FALSE)
+moran.test(pr_tracts_demo$owner_occupied_rate, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
 
 ### Check Moran's I for pwg_mph
 ```{r}
-moran.test(pr_tracts_demo$pwg_mph, nblist, zero.policy = T, randomisation = FALSE)
+moran.test(pr_tracts_demo$pwg_mph, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
 ### linear regression
