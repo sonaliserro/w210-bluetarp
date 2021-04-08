@@ -1,6 +1,18 @@
 ---
-title: "spatial-autocorrelation"
-output: html_document
+title: 'Socially Vulnerable Populations and Susceptibility to Damages'
+subtitle: 'Spatial Autocorrelation'
+geometry: margin=1in
+output:
+  github_document: default
+  pdf_document: default
+  toc: yes
+  number_sections: yes
+fontsize: 11pt
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_format = c('github_document', 'pdf_document'))
+    })
 ---
 
 ```{r setup, include=FALSE}
@@ -8,44 +20,50 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-library(rgdal)    # for readOGR and others
-library(sp)       # for spatial objects
-library(spdep)    # for modeling
-library(dplyr)    # for working with data frames
-library(ggplot2)  # for plotting 
-library(maptools) # for plotting 
-library(tigris)   # for geo_join
-library(rgeos)    # for spatial objects
+library(rgdal)      # for readOGR and others
+library(sp)         # for spatial objects
+library(spdep)      # for modeling
+library(dplyr)      # for working with data frames
+library(data.table) # for working with data.tables
+library(ggplot2)    # for plotting 
+library(maptools)   # for plotting 
+library(tmap)       # for plotting
+library(tigris)     # for geo_join
+library(rgeos)      # for spatial objects
+library(spatialreg) # for spatial regression
+library(stargazer)  # for regression models
 ```
 
 ### Load the shapefiles as SpatialPolygonsDataFrame
+
 ```{r}
+# Read spatial data
 pr_tracts <- readOGR(dsn="../data/census-tract/shapefiles", layer = "cb_2017_72_tract_500k")
-# convert the GEOID to a character
+
+# Convert the GEOID to a character
 pr_tracts@data$GEOID<-as.character(pr_tracts@data$GEOID)
 ```
 
-### Plot using ggplot
-```{r}
-#ggtract <- fortify(pr_tracts, region = "GEOID") 
-#ggplot() +
-#  geom_polygon(data = ggtract, aes(x=long, y=lat))
-```
+### Load FEMA data
 
-### Load the fema data
 ```{r}
 d_fema <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv', encoding = 'UTF-8')
-d_fema <- select(d_fema, censustractid, county, below_poverty_rate, bachelors_degree_rate, unemployed_labor_rate, owner_occupied_rate, built_1979_or_earlier_rate, waterlevel, pwg_mph, damageamount_cap)
+
+d_fema <- select(d_fema, censustractid, county, below_poverty_rate, bachelors_degree_rate, unemployed_labor_rate, owner_occupied_rate, built_1979_or_earlier_rate, waterlevel, pwg_mph, pwg_saffir_simpson, damageamount_cap)
 d_fema$censustractid <- as.character(d_fema$censustractid)
+
+head(d_fema)
 ```
 
 ### Join the SpatialPolygonsDataFrame with the Dema dataframe
+
 ```{r}
 pr_tracts_demo <- geo_join(pr_tracts, d_fema, by_sp="GEOID", by_df="censustractid", how="inner")
 nrow(pr_tracts_demo)
 ```
 
-### Create neighbor's
+### Create neighbors
+
 ```{r}
 nbq <- poly2nb(pr_tracts_demo)
 nblist <- nb2listw(nbq, zero.policy = T, style="W")
@@ -53,35 +71,131 @@ summary(nbq)
 ```
 
 ### Plot using the plot function
+
 ```{r}
 plot(pr_tracts_demo, border="grey60")
 plot(nbq, coordinates(pr_tracts_demo), add=TRUE, pch=".")
 ```
 
 ### Check Moran's I for below_poverty_rate
+
 ```{r}
 moran.test(pr_tracts_demo$below_poverty_rate, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
-
 ### Check Moran's I for owner_occupied_rate
+
 ```{r}
 moran.test(pr_tracts_demo$owner_occupied_rate, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
-
 ### Check Moran's I for pwg_mph
+
 ```{r}
 moran.test(pr_tracts_demo$pwg_mph, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
-### linear regression
+## Linear Regression
+
 ```{r}
-lm_model <- lm(formula=log1p(damageamount_cap) ~ pwg_mph + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = pr_tracts_demo)
+# OLS regression
+lm_model <- lm(formula=log1p(damageamount_cap) ~ pwg_saffir_simpson + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = pr_tracts_demo)
 summary(lm_model)
 shapiro.test(lm_model$residuals)
 ```
 
+## Spatial Dependencies
+
 ```{r}
-lm.morantest(lm_model, listw = nblist, zero.policy = T)
+# Moran test for spatial correlation in residuals
+(moran_model <- lm.morantest(lm_model, listw = nblist, zero.policy = T, alternative = 'two.sided'))
 ```
+
+## Removing NAs for Plots
+
+```{r}
+# Census tracts with NAs
+d_fema[rowSums(is.na(d_fema)) > 0, ]
+
+# Remove NAs from spatial
+pr_tracts_demo_clean <- pr_tracts_demo[!(pr_tracts_demo@data$GEOID %in% c('72037160100', '72113073008')), ]
+```
+
+```{r}
+# OLS - NA removed
+lm_model_clean <- lm(formula=log1p(damageamount_cap) ~ pwg_saffir_simpson + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = pr_tracts_demo)
+
+# Add residuals
+pr_tracts_demo_clean@data$residuals <- residuals(lm_model_clean)
+```
+
+
+## Plotting OLS Residuals
+
+```{r, fig.width=10, fig.height=3.5}
+# Residual plot
+spplot(pr_tracts_demo_clean, c('residuals'), colorkey=list(space='bottom'),
+       main = 'OLS Residuals')
+```
+
+```{r, warning=FALSE}
+# Adjust bouding box
+bbox_new <- st_bbox(pr_tracts_demo_clean) # current bounding box
+
+# Range of values
+xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+
+# Options for box adjustments
+bbox_new[1] <- bbox_new[1] + (0.21 * xrange) # xmin - left
+bbox_new[3] <- bbox_new[3] - (0.01 * xrange) # xmax - right
+# bbox_new[2] <- bbox_new[2] - (0.25 * yrange) # ymin - bottom
+# bbox_new[4] <- bbox_new[4] + (0.2 * yrange) # ymax - top
+
+# Make bounding box a sf polygon
+bbox_new <- bbox_new %>%
+  st_as_sfc()
+```
+
+```{r, fig.width=10, fig.height=3.5, warning=FALSE}
+# Plot residuals
+tm_shape(pr_tracts_demo_clean, bbox = bbox_new) + 
+  tm_fill('residuals', title = 'Residuals', palette = '-RdBu', midpoint = 0) +
+  tm_borders(alpha = 0.1) +
+  tm_layout(main.title = 'OLS Residuals', main.title.size = 1,
+            legend.position = c('left', 'bottom'), legend.title.size = 0.9)
+```
+
+## Spatial LM Tests
+
+```{r}
+# Run LaGrange multiplier tests
+lm.LMtests(lm_model, nblist, zero.policy = T, test = c('LMerr','LMlag','RLMerr','RLMlag','SARMA'))
+
+# Both LMerr and LMlag are significant and so must check robust versions
+# RLMerr is not significant (p=0.082), indicating spatial error should be used
+```
+
+## Spatial Regression
+
+```{r}
+# Spatial regression - error model
+sem_model <- errorsarlm(formula = log1p(damageamount_cap) ~ pwg_saffir_simpson + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = pr_tracts_demo, listw = nblist, zero.policy = T)
+
+summary(sem_model)
+
+Hausman.test(sem_model)
+```
+
+```{r, results='asis', echo=FALSE, warning=FALSE}
+# Regression tablefont.size = 'small'
+stargazer(lm_model, sem_model, 
+          title = 'Social Vulnerability and Susceptibility to Damages',
+          header = FALSE, type = 'latex', model.names = FALSE, 
+          dep.var.labels = 'Damage Amount per Capita (Log)',
+          covariate.labels = c('Peak Wind Gusts', 'Water Level (log)','Below Poverty Rate', 'Bachelor Degree Rate',
+                               'Unemployed Labor Rate', 'Homes built 1979 or Earlier Rate', 'Owner Occupied Rate'),
+
+          column.labels = c('OLS', 'Spatial Error'))
+```
+
