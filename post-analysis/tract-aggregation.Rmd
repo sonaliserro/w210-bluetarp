@@ -16,7 +16,7 @@ knit: (function(inputFile, encoding) {
     })
 ---
 
-```{r}
+```{r, echo=FALSE, message=FALSE}
 # Load packages
 library(car)
 library(tidyr)
@@ -27,9 +27,9 @@ library(GGally)
 library(knitr)
 ```
 
-# Exploratory Data Analysis
+## Data Clean-Up
 
-```{r}
+```{r, message=FALSE}
 # Read data in PR
 d_puerto <- fread(file = '../data/open-fema/FEMA-Large-Demographics-WindSpeed-PR.csv', fill = TRUE, encoding = 'UTF-8')
 paste('Total rows:', nrow(d_puerto))
@@ -64,21 +64,22 @@ d_puerto[ ,`:=` (personalpropertyeligible = ifelse(personalpropertyeligible == T
 # Calculate total damages
 d_puerto[ , `:=` (damageamount = rpfvl + ppfvl)]
 
-# Replace missing waterlevels
+# Replace missing waterlevel
 d_puerto[ , `:=` (waterlevel = ifelse(is.na(waterlevel), 0, waterlevel))]
-# Remove waterlevel outliers?
+
+# Remove waterlevel outliers
 d_puerto <- d_puerto[waterlevel <= 120, ]
 
 # Tract with zero population
 d_puerto <- d_puerto[total_population != 0, ]
 
+# Create insurance dummy
 d_puerto[ , `:=` (insurance = ifelse(homeownersinsurance == 1 | floodinsurance == 1, 1, 0))]
-
-d_puerto[, c('homeownersinsurance', 'floodinsurance', 'insurance')]
 
 nrow(d_puerto)
 ```
 
+## Eligibility Status and Estiamted Damages
 
 ```{r}
 # Eligibility status and damage estimates
@@ -93,7 +94,7 @@ d_status[ , `:=` (status = ifelse(inspected == 0, 'Not inspected',
                                      & rentalassistanceeligible == 0, 'Inspected, not eligible', 'Eligible')))]
 
 # Reorder variables - status summary to front
-(d_status <- d_status %>% dplyr::select(status, everything()))
+d_status <- d_status %>% dplyr::select(status, everything())
 ```
 
 ```{r}
@@ -145,12 +146,10 @@ d_fema <- d_puerto[ , .(householdcomposition = as.numeric(mean(householdcomposit
                         owner_occupied_rate = mean(owner_occupied_rate),
                         pwg_mph = mean(pwg_mph),
                         pwg_county_avg_mph = mean(pwg_county_avg_mph),
-                        damageamount = sum(damageamount)), keyby = c('state', 'county', 'county_fips', 'censustractid')]
-
+                        damageamount = sum(damageamount)),
+                      keyby = c('state', 'county', 'county_fips', 'censustractid')]
 head(d_fema)
 ```
-
-## Calculate Rates
 
 ```{r}
 # Calculate per capita and means
@@ -178,24 +177,28 @@ d_fema[ , `:=` (specialneeds_cap = specialneeds/total_population,
                 replacementamount_cap = replacementamount/total_population,                
                 sbaeligible_cap = sbaeligible/total_population,
                 primaryresidence_cap = primaryresidence/total_population,
-                personalpropertyeligible_cap = personalpropertyeligible/total_population), keyby = c('state', 'county', 'county_fips', 'censustractid')]
-d_fema
+                personalpropertyeligible_cap = personalpropertyeligible/total_population),
+              keyby = c('state', 'county', 'county_fips', 'censustractid')]
+
+head(d_fema)
 ```
-## Calculate the saffir-simpson wind scale
+
+## Additional Data for Exploration
+
 ```{r}
 # Calculate saffir-simposon wind scale
 d_fema[ , `:=` (pwg_saffir_simpson = ifelse(pwg_mph <= 74, 0,
                                      ifelse(pwg_mph > 74 & pwg_mph <= 95, 1, 
-                                                ifelse(pwg_mph > 95 & pwg_mph <= 110, 2,
-                                                       ifelse(pwg_mph > 110 & pwg_mph <= 129, 3,
-                                                              ifelse(pwg_mph > 129 & pwg_mph <= 156, 4, 5))))))]
+                                        ifelse(pwg_mph > 95 & pwg_mph <= 110, 2,
+                                          ifelse(pwg_mph > 110 & pwg_mph <= 129, 3,
+                                            ifelse(pwg_mph > 129 & pwg_mph <= 156, 4, 5))))))]
 ```
-## Join CDC's Social Vulnerability Index (SVI)
 
 ```{r}
-# Read in SVI data
+# Read in CDC's Social Vulnerability Index (SVI) data
 d_svi <- fread(file = '../data/census-tract/cdc-svi/SVI-PR-2016.csv', encoding = 'UTF-8')
 head(d_svi)
+
 # Rename fields
 setnames(d_svi, old = c('FIPS',
                         'RPL_THEME1',
@@ -217,10 +220,7 @@ d_svi <- d_svi[ , c('censustractid', 'svi_socioeconomic', 'svi_householdcomp', '
 paste('Before join:', nrow(d_fema))
 d_fema <- merge(x = d_fema, y = d_svi, by = 'censustractid', all.x = TRUE)
 paste('After join:', nrow(d_fema))
-
-head(d_fema, 30)
 ```
-
 
 ```{r}
 # Write to csv  
@@ -248,7 +248,8 @@ d_fema[rowSums(is.na(d_fema)) > 0, ]
 
 ```{r, fig.width=8, fig.height=3, warning=FALSE}
 # Demographic variables
-demo_cols <- c('below_poverty_rate', 'unemployed_labor_rate', 'bachelors_degree_rate', 'built_1979_or_earlier_rate', 'owner_occupied_rate')
+demo_cols <- c('below_poverty_rate', 'unemployed_labor_rate', 'bachelors_degree_rate',
+               'built_1979_or_earlier_rate', 'owner_occupied_rate')
 
 # Pivot demos longer
 demo_long <- d_fema %>%
