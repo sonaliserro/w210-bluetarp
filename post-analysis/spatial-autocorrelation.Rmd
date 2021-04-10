@@ -49,6 +49,9 @@ pr_tracts@data$GEOID<-as.character(pr_tracts@data$GEOID)
 ```{r}
 d_fema <- fread(file = '../data/open-fema/FEMA-Large-Tract-Demographics-WindSpeed-PR.csv', encoding = 'UTF-8')
 
+# Convert variables names to lower case
+names(d_fema) <- tolower(names(d_fema))
+
 d_fema <- select(d_fema, censustractid, county, below_poverty_rate, bachelors_degree_rate, unemployed_labor_rate, owner_occupied_rate, built_1979_or_earlier_rate, waterlevel, pwg_mph, pwg_saffir_simpson, damageamount_cap)
 d_fema$censustractid <- as.character(d_fema$censustractid)
 
@@ -89,10 +92,10 @@ moran.test(pr_tracts_demo$below_poverty_rate, nblist, zero.policy = T, randomisa
 moran.test(pr_tracts_demo$owner_occupied_rate, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
-### Check Moran's I for pwg_mph
+### Check Moran's I for pwg_saffir_simpson
 
 ```{r}
-moran.test(pr_tracts_demo$pwg_mph, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
+moran.test(pr_tracts_demo$pwg_saffir_simpson, nblist, zero.policy = T, randomisation = FALSE, na.action = na.omit)
 ```
 
 ## Linear Regression
@@ -100,6 +103,7 @@ moran.test(pr_tracts_demo$pwg_mph, nblist, zero.policy = T, randomisation = FALS
 ```{r}
 # OLS regression
 lm_model <- lm(formula=log1p(damageamount_cap) ~ pwg_saffir_simpson + log1p(waterlevel) + below_poverty_rate + bachelors_degree_rate + unemployed_labor_rate + built_1979_or_earlier_rate + owner_occupied_rate, data = pr_tracts_demo)
+lm_model$AIC <- AIC(lm_model)
 summary(lm_model)
 shapiro.test(lm_model$residuals)
 ```
@@ -139,7 +143,7 @@ spplot(pr_tracts_demo_clean, c('residuals'), colorkey=list(space='bottom'),
 ```
 
 ```{r, warning=FALSE}
-# Adjust bouding box
+# Adjust bounding box
 bbox_new <- st_bbox(pr_tracts_demo_clean) # current bounding box
 
 # Range of values
@@ -170,7 +174,8 @@ tm_shape(pr_tracts_demo_clean, bbox = bbox_new) +
 
 ```{r}
 # Run LaGrange multiplier tests
-lm.LMtests(lm_model, nblist, zero.policy = T, test = c('LMerr','LMlag','RLMerr','RLMlag','SARMA'))
+lmtests <- lm.LMtests(lm_model, nblist, zero.policy = T, test = c('LMerr','LMlag','RLMerr','RLMlag','SARMA'))
+summary(lmtests)
 
 # Both LMerr and LMlag are significant and so must check robust versions
 # RLMerr is not significant (p=0.082), indicating spatial error should be used
@@ -191,11 +196,11 @@ Hausman.test(sem_model)
 # Regression tablefont.size = 'small'
 stargazer(lm_model, sem_model, 
           title = 'Social Vulnerability and Susceptibility to Damages',
-          header = FALSE, type = 'latex', model.names = FALSE, 
+          header = FALSE, type = 'text', model.names = FALSE, 
           dep.var.labels = 'Damage Amount per Capita (Log)',
           covariate.labels = c('Peak Wind Gusts', 'Water Level (log)','Below Poverty Rate', 'Bachelor Degree Rate',
                                'Unemployed Labor Rate', 'Homes built 1979 or Earlier Rate', 'Owner Occupied Rate'),
-
+          keep.stat=c("aic", "n"),
           column.labels = c('OLS', 'Spatial Error'))
 ```
 
