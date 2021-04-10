@@ -1,0 +1,329 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Project Blue Tarp</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+
+      @import url("https://use.typekit.net/zbe5ofc.css");
+
+      .header {
+        height: 25%;
+        background-image: linear-gradient(to bottom, rgba(64, 109, 181, 0.25), rgba(255, 255, 255, 1) 95%), url("https://eoimages.gsfc.nasa.gov/images/imagerecords/92000/92789/puertorico_gliht_2018117_lrg.jpg");
+        background-size: cover;
+      }
+
+      /* Set default font for body */
+      body {
+        font-family: source-sans-pro !important;
+        background-color: rgba(255, 255, 255);
+        padding-top: 50px;
+      }
+
+      /* Make h1 bold */
+      h1 {
+        font-weight: bold;
+        font-size: 4.5rem;
+      }
+
+      .badge-pill {
+        background-color: #eeee81;
+        padding: 5px 12px;
+        font-size: 2rem;
+        color: black;
+      }
+
+      .intro-box-body {
+        padding-top: 10px;
+        padding-left: 5px;
+        padding-right: 0px;
+        padding-bottom: 10px;
+        font-size: 120%;
+        max-width: 90%;
+      }
+
+      .num-callout {
+        display: block;
+      }
+
+      .num-callout h1 {
+        font-size: 6rem;
+        text-align: center;
+        margin-bottom: 0;
+      }
+
+      .num-callout p {
+        font-size: 120%;
+        text-align: center;
+      }
+
+      .tableau-viz {
+        max-width: 90%;
+      }
+
+      #home-viz {
+        width: 925px;
+        height: 1233px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Make logo fit width of nav bar */
+      #logo {
+        height: 55px
+      }
+
+      .main-content {
+        padding-left: 10%;
+      }
+
+      .navbar {
+        min-height: 80px;
+      }
+
+      .navbar-brand {
+        height: 80px;
+        line-height: 70px;
+        padding-right: 45px;
+        padding-left: 35px;
+      }
+
+      .navbar-toggle {
+        margin-top: 23px;
+        padding: 9px 10px !important;
+      }
+
+      ul.nav li.dropdown:hover ul.dropdown-menu {
+        display: block;
+      }
+
+      .block-img {
+        width: 60%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .float-img {
+        width: 47%;
+        display: float;
+        marign-left: auto;
+        margin-right: auto;
+      }
+
+      .anchor {
+        display: block;
+        height: 115px;
+        margin-top: -115px;
+        visibility: hidden;
+      }
+
+      .table {
+        width: 90%;
+      }
+
+      /* On small screens, set height to 'auto' for the grid */
+      @media screen and (min-width: 768px) {
+        .navbar-nav > li > a {
+          padding-top: 26.5px;
+          padding-bottom: 26.5px;
+          line-height: 27px;
+        }
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html"><img id="logo" src="bluetarp-logo1.png" alt="Project Blue Tarp Logo"></a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home<span class="sr-only">(current)</span></a></li>
+            <li class="dropdown">
+              <a href="approach.html" role="button" aria-haspopup="true" aria-expanded="false">Approach<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="approach.html#model-pipeline">Modeling Pipeline</a></li>
+                <li><a href="approach.html#model-perform">Model Performance</a></li>
+                <li><a href="approach.html#model-select">Model Selection</a></li>
+                <li><a href="approach.html#rf-perform">Random Forest Performance</a></li>
+              </ul>
+            </li>
+            <li class="dropdown active">
+              <a href="data.html" role="button" aria-haspopup="true" aria-expanded="false">Data<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="data.html#fema-lg">FEMA's Individual Assistance Database</a></li>
+                <li><a href="data.html#census">U.S. Census Tract Demographics</a></li>
+                <li><a href="data.html#hud">HUD Fair Market Rates</a></li>
+                <li><a href="data.html#nhc">NHC Hurricane Track Data</a></li>
+                <li><a href="data.html#ara">ARA Hurricane Wind Speed Data</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="findings.html" role="button" aria-haspopup="true" aria-expanded="false">Findings<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+              </ul>
+            </li>
+            <li><a href="conclusion.html">Conclusion</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+
+    <div class="header">
+    </div>
+    <div class="container-fluid main-content">
+      <div class="title">
+          <h1>Data</h1>
+          <br>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-body">
+          <p>A comprehensive database has been created at the U.S. Census Tract level<sup><a href="#fn1">1</a></sup> for the states of Florida, Texas and Puerto Rico.  Data has been obtained from the following publicly available datasets and encompasses FEMA damage reports and payments, Census demographics and hurricane geospatial files containing peak wind speeds.</p>
+          <ul>
+            <li>OpenFEMA’s Individual Assistance Housing Registrants – Large Disasters</li>
+            <li>U.S. Census Bureau’s American Community Survey – 5 Year Estimates</li>
+            <li>U.S. Department of Housing and Urban Development (HUD) Fair Market Rates</li>
+            <li>National Oceanic and Atmospheric Administration Hurricane Track Data</li>
+            <li>Applied Research Associates, Inc. (ARA) Hurricane Wind Speed Data</li>
+          </ul>
+          <hr></hr>
+          <sup id="fn1">1. A U.S. Census Tract is a lower-level geographic area which typically spans 1,200 to 8,000 people and as such better reflects the demographic characteristics of smaller communities within a county or municipality.</sup>
+          <br>
+          <br>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="fema-lg"></span>
+          <span class="badge badge-pill">FEMA's Individual Assistance Database for Large Disasters</span>
+        </div>
+        <div class="intro-box-body">
+          <p>FEMA makes its data publicly available as it seeks to promote “government transparency and accountability, as well as enabling collaboration with community partners... to improve outcomes in support of disaster survivors.”</p>
+          <p>The Large Disasters dataset includes anonymized records of applications for FEMA’s Individual Assistance program during the 2017 hurricane season. The data was derived from the National Emergency Information System (NEMIS), which has been used to process all cases for FEMA’s Individual Assistance programs since 1998.  It contains data on the damages sustained, claimant eligibility status and amount of financial aid provided by FEMA to help pay for temporary housing and housing repairs.  It also includes other fields which are pertinent in FEMA’s determination of claimant eligibility and amount of aid required such as insurance status and FEMA estimated valuation of property damages upon inspection of the property.</p>
+          <p>FEMA’s Individuals and Household Unified Guidance sets forth the standardized guidelines which define the administration of the program.  Residents of impacted communities are entitled to submit housing assistance claims pertaining to:</p>
+          <ul>
+            <li>Housing repairs</li>
+            <li>Home replacements</li>
+            <li>Rental assistance</li>
+          </ul>
+          <p>These three payments types make up the Housing Assistance program and are collectively referred to as the Housing Assistance (HA) Amount.  This is the target variable of interest in this study and as such will serve as the basis for the comparison of financial aid allocations across the U.S. states and territories.</p>
+          <p>The following visualizations give a sense of the magnitude of FEMA’s Housing Assistance program, by displaying payments made to Florida and Texas communities, during 2017.</p>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="census"></span>
+          <span class="badge badge-pill">U.S. Census Tract Demographics</span>
+        </div>
+        <div class="intro-box-body">
+          <p>A detailed database consisting of more than 300 demographic attributes was collated from the U.S. Census Bureau’s 2017 American Community Survey, using 5-year estimates.  This database enables a rich demographic profile to be developed for U.S. Census Tracts and at a high-level spans:</p>
+          <ul>
+            <li><i>Socioeconomic factors</i> – poverty, income, unemployment and educational attainment</li>
+            <li><i>Housing characteristics</i> – homeownership rates, residence type and structural aspects such as year built</li>
+            <li><i>Nativity and citizenship</i> – nationality and citizenship status</li>
+            <li><i>Public assistance</i> – financial assistance and food stamps</li>
+          </ul>
+          <p>The demographic database will make it possible to analyze whether any relationship exists between socioeconomic status and the amount of FEMA aid received.  It is also a key component of the post-analysis which will investigate whether socioeconomic status is a predictor of the damages sustained during a hurricane.</p>
+          <br>
+          <img class="block-img" src="data-demographics.png" alt="Charts: Poverty Rates by State/Territory, Employment Rates by State/Territory">
+          <br>
+          <br>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="hud"></span>
+          <span class="badge badge-pill">HUD Fair Market Rates</span>
+        </div>
+        <div class="intro-box-body">
+          <p>Fair Market Rates (FMRs) are gross rent estimates established by the U.S. Department of Housing and Urban Development.  FMRs include the shelter rent plus the cost of utilities and reflects the 40th percentile for gross rents for regular rental units occupied by recent movers in a local housing market, i.e. within a given county.  FMRs are a key component of FEMA’s payment calculation when setting the rental assistance rates for communities in the wake of a disaster.</p>
+          <br>
+          <img class="block-img" src="fema-ihp-fmr-calculator.png" alt="FEMA Fair Market Rate Calculator">
+          <br>
+          <br>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="nhc"></span>
+          <span class="badge badge-pill">National Hurricane Center (NHC) Hurricane Track Data</span>
+        </div>
+        <div class="intro-box-body">
+          <p>The National Hurricane Center (NHC) is the division of the United States' NOAA/National Weather Service responsible for tracking and predicting tropical weather systems. The agency maintains archives and statistics on Atlantic and Pacific hurricane history, including hurricane forecast tracks, uncertainty cones, and warnings. The datasets are available as GIS shapefiles, a standard format for encoding geospatial information. Incorporating the path of the hurricane in our analysis was an important step in being able to visualize areas of most impact from the storm.</p>
+          <img class="float-img" src="hurricane-maria-track.png" alt="Hurricane Maria Track">
+          <img class="float-img" src="hurricane-maria-warning-cone.png" alt="Hurricane Maria Warning Cone">
+          <br>
+          <br>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="ara"></span>
+          <span class="badge badge-pill">Applied Research Associates, Inc (ARA) Hurricane Wind Speed Data</span>
+        </div>
+        <div class="intro-box-body">
+          <p>ARA is a research and engineering company headquartered in Albuquerque, New Mexico, that has developed a hurricane catastrophe model to derive wind speeds and directions of a translating storm. Hurricane wind speeds can be used to estimate potential property damage using the Saffir-Simpson Hurricane Wind Scale (see table). This dataset is used in our post-analysis where peak wind gusts for each census tract are included to control for storm-specific factors across the island.</p>
+          <br>
+          <img class="block-img" src="hurricane-maria-peak-wind-gusts.png" alt="Map of Hurricane Maria Peak Wind Gust Speak by County">
+        </div>
+        <table class="table table-bordered">
+          <caption>The Saffir-Simpson Hurricane Wind Scale</caption>
+          <tr>
+            <th>Category</th>
+            <th>Sustained Winds</th>
+            <th>Type of Damage</th>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>74-95 mph</td>
+            <td>Very dangerous, some damage</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>96-110 mph</td>
+            <td>Extremely dangerous, extensive damage</td>
+          </tr>
+          <tr>
+            <td>3 (major)</td>
+            <td>111-129 mph</td>
+            <td>Devastating damage will occur</td>
+          </tr>
+          <tr>
+            <td>4 (major)</td>
+            <td>130-156 mph</td>
+            <td>Catastrophic damage will occur</td>
+          </tr>
+          <tr>
+            <td>5 (major)</td>
+            <td>>157 mph</td>
+            <td>Catastrophic damage will occur</td>
+          </tr>
+        </table>
+        <br>
+        <br>
+      </div>
+    </div>
+  </body>
+</html>

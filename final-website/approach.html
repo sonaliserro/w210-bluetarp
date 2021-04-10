@@ -1,0 +1,321 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Project Blue Tarp</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+
+      @import url("https://use.typekit.net/zbe5ofc.css");
+
+      .header {
+        height: 25%;
+        background-image: linear-gradient(to bottom, rgba(64, 109, 181, 0.25), rgba(255, 255, 255, 1) 95%), url("https://eoimages.gsfc.nasa.gov/images/imagerecords/92000/92789/puertorico_gliht_2018117_lrg.jpg");
+        background-size: cover;
+      }
+
+      /* Set default font for body */
+      body {
+        font-family: source-sans-pro !important;
+        background-color: rgba(255, 255, 255);
+        padding-top: 50px;
+      }
+
+      /* Make h1 bold */
+      h1 {
+        font-weight: bold;
+        font-size: 4.5rem;
+      }
+
+      .badge-pill {
+        background-color: #eeee81;
+        padding: 5px 12px;
+        font-size: 2rem;
+        color: black;
+      }
+
+      .intro-box-body {
+        padding-top: 10px;
+        padding-left: 5px;
+        padding-right: 0px;
+        padding-bottom: 10px;
+        font-size: 120%;
+        max-width: 90%;
+      }
+
+      .num-callout {
+        display: block;
+      }
+
+      .num-callout h1 {
+        font-size: 6rem;
+        text-align: center;
+        margin-bottom: 0;
+      }
+
+      .num-callout p {
+        font-size: 120%;
+        text-align: center;
+      }
+
+      .tableau-viz {
+        max-width: 90%;
+      }
+
+      #home-viz {
+        width: 1233px;
+        height: 925px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Make logo fit width of nav bar */
+      #logo {
+        height: 55px
+      }
+
+      .main-content {
+        padding-left: 10%;
+      }
+
+      .navbar {
+        min-height: 80px;
+      }
+
+      .navbar-brand {
+        height: 80px;
+        line-height: 70px;
+        padding-right: 45px;
+        padding-left: 35px;
+      }
+
+      .navbar-toggle {
+        margin-top: 23px;
+        padding: 9px 10px !important;
+      }
+
+      ul.nav li.dropdown:hover ul.dropdown-menu {
+        display: block;
+      }
+
+      .block-img {
+        width: 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .float-img {
+        width: 47%;
+        display: float;
+        marign-left: auto;
+        margin-right: auto;
+      }
+
+      .anchor {
+        display: block;
+        height: 115px;
+        margin-top: -115px;
+        visibility: hidden;
+      }
+
+      .table {
+        width: 90%;
+      }
+
+      /* On small screens, set height to 'auto' for the grid */
+      @media screen and (min-width: 768px) {
+        .navbar-nav > li > a {
+          padding-top: 26.5px;
+          padding-bottom: 26.5px;
+          line-height: 27px;
+        }
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html"><img id="logo" src="bluetarp-logo1.png" alt="Project Blue Tarp Logo"></a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home<span class="sr-only">(current)</span></a></li>
+            <li class="dropdown active">
+              <a href="approach.html" role="button" aria-haspopup="true" aria-expanded="false">Approach<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="approach.html#model-pipeline">Modeling Pipeline</a></li>
+                <li><a href="approach.html#model-perform">Model Performance</a></li>
+                <li><a href="approach.html#model-select">Model Selection</a></li>
+                <li><a href="approach.html#rf-perform">Random Forest Performance</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="data.html" role="button" aria-haspopup="true" aria-expanded="false">Data<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="data.html#fema-lg">FEMA's Individual Assistance Database</a></li>
+                <li><a href="data.html#census">U.S. Census Tract Demographics</a></li>
+                <li><a href="data.html#hud">HUD Fair Market Rates</a></li>
+                <li><a href="data.html#nhc">NHC Hurricane Track Data</a></li>
+                <li><a href="data.html#ara">ARA Hurricane Wind Speed Data</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="findings.html" role="button" aria-haspopup="true" aria-expanded="false">Findings<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+              </ul>
+            </li>
+            <li><a href="conclusion.html">Conclusion</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+
+    <div class="header">
+    </div>
+    <div class="container-fluid main-content">
+      <div class="title">
+          <h1>Approach</h1>
+          <br>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-body">
+          <p>This research will leverage machine learning to train a model on the relevant features used by FEMA when assessing the amount of housing assistance aid applicants are entitled to receive.  The model will be trained on hurricanes Irma and Harvey – which hit Florida and Texas, respectively – and will then predict the Housing Assistance (HA) Amount that Puerto Rico should have received in the wake of hurricane Maria, assuming equitable allocation of financial aid for those claimants that were inspected.</p>
+          <p>The premise which underlies this approach is that if the HA Amount estimated by the model is consistent with the payments received, then this is confirmation that FEMA’s HA Program has been administered consistently and that Puerto Rican residents had equal access to the provisions set forth in the guidelines.  Alternatively, the magnitude of any difference between the predicted HA Amount and the actual HA Amount received, will indicate the extent to which there is inequitable access or allocation of housing assistance aid.</p>
+          <br>
+          <br>
+          <img class="block-img" src="approach-flow.png" alt="Flow diagram of project approach">
+          <br>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="model-pipeline"></span>
+          <span class="badge badge-pill">Modeling Pipeline</span>
+        </div>
+        <div class="intro-box-body">
+          <p>The modeling pipeline consists of several stages which can broadly be summarized as data ingestion, feature exploration and model development.  The OpenFEMA data serves as the foundation for this research and was augmented with Census housing demographics and HUD Fair Market Rates to ensure the models could be trained on many of the pertinent features used by FEMA when assessing claims for financial aid, as outlined in the IHP Unified Guidelines. The datasets were then cleaned, deduplicated and combined to create a master database consisting of <b>3.2M records</b>, primed for exploratory data analysis and model development.</p>
+          <p>The feature exploration phase was iterative in nature and the analysis of prediction errors was an integral component of the model development phase.  Two models were ultimately selected – one which would predict the repair/replacement amounts associated with property damage, and another which would predict the rental assistance amount required to pay for temporary housing.  Further details of the model selection process is outlined in the Model Performance section.  Once the optimal models were determined, the HA Amount for Puerto Rico was predicted, and subsequently compared to the actual HA Amount allocated by FEMA.</p>
+          <br>
+          <br>
+          <img class="block-img" src="approach-pipeline.png" alt="Diagram of modeling pipeline">
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="model-perform"></span>
+          <span class="badge badge-pill">Model Performance</span>
+        </div>
+        <div class="intro-box-body">
+          <p>A number of regressors were evaluated during the model development phase and performance  was primarily evaluated using the Root Mean Squared Error (RMSE) and Mean Absolute Error (MAE).  Additionally, models with regularization options were favored due to their ability to generalize well to unseen data.  Linear models, decision trees, neural nets and various ensemble models (boosting/bagging) were under consideration initially.  A brief description of each model is outlined below, followed by a summary of their performance against the in-sample (Florida/Texas) validation set.</p>
+          <p><b>Lasso Regression</b> – performs L1 regularization to minimize the Residual Sum of Squares (RSS) plus the sum of absolute value of the magnitude of the coefficient weights. The effect is that the magnitude of the coefficients shrinks as alpha is increased, thereby reducing the feature space. It is an effective way to select those features that best describe the variance of the dependent variable. The OpenFEMA data contains a number of highly correlated variables, and lasso regression accounts for this by arbitrarily selecting one of the features and setting the coefficient size to zero for all others.</p>
+          <p><b>AdaBoost</b> – a boosting algorithm in which a series of weak learners are created that iteratively build upon the preceding learner to optimize the loss function in the final model. Upon each iteration, AdaBoost adaptively adjusts the learner weights in favor of minimizing the largest prediction errors.</p>
+          <p><b>Multi-Layer Perceptron</b> – an artificial neural network model which uses backpropagation for training.  In the regression context, MLP has no activation function and so the Squared Error is the loss function minimized.</p>
+          <p><b>Gradient Boosting</b> – an ensemble model that uses boosting methods to optimize the loss function (squared error) of the model. For instance, an initial weak learner is created that predicts HA Amount using some constant, in the next iteration a new weaker learner is created that is fitted to the residuals of the previous learner and so on and so forth. The result is an ensemble model that minimizes the loss function using a gradient descent algorithm.</p>
+          <p><b>XGBoost</b> – an enhanced version of gradient boosting which has become popular due to its training speed and improved predictive power.  The latter is achieved using the second order derivative of the loss function which yields more information about the direction of the gradient.</p>
+          <p><b>Random Forest</b> – an ensemble of decision trees that uses bagging methods.  In bagging, each tree is trained on a different sample of the full training set.  Random Forests uses an extension of this called bootstrap sampling in which sampling with replacement takes place.  A number of regularization options are available – for instance, selecting a subset of features at each split point when constructing trees, resulting in trees which are more varied across the ensemble.  It is desirable for trees to remain unpruned as this increased variability produces less correlated predictions and errors.  Predictions across all trees are then averaged, generating more accurate predictions than can be achieved using a single tree.</p>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="model-select"></span>
+          <span class="badge badge-pill">Model Selection</span>
+        </div>
+        <div class="intro-box-body">
+          <p>The following graphs display the in-sample performance of each candidate model on the held out validation set for Florida and Texas.  Lasso and AdaBoost did not perform as well as the other models (higher RMSE and MAE) and as such were dropped from contention.  The performance of the remaining models were generally equivalent and so the strengths and weaknesses of each model were taken into consideration in order to find the best option for our dataset and project.</p>
+          <img class="float-img" src="approach-performance-rmse.png" alt="Performance results based on RMSE">
+          <img class="float-img" src="approach-performance-mae.png" alt="Performance results based on MAE">
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="rf-perform"></span>
+          <span class="badge badge-pill">Random Forest Performance</span>
+        </div>
+        <div class="intro-box-body">
+          <p>The Random Forest Regressor was optimized further using additional hyperparameters to ensure generalizability.  Prior to predicting HA Amount on Puerto Rico, the model’s out-of-sample performance was assessed to demonstrate the accuracy and reliability of predictions on new and unseen data.  For this, OpenFEMA data was obtained for North Carolina, which was hit by hurricane Florence in 2018.  Our model’s performed equally well in-sample and out-sample, generating equivalent RMSEs and predictions within <b>X.XX?</b> of the actual HA Amounts allocated.  These results demonstrate our model’s ability to reliably capture the two separate payment mechanisms which underpin FEMA’s Housing Assistance program - home repair-replacement and rental assistance.  The accuracy of the predictions reinforces our assertion that the magnitude of any difference observed between the predicted HA Amount and the actual HA Amount received, will indicate the extent to which there is inequitable access or allocation of housing assistance aid in Puerto Rico.</p>
+        </div>
+        <table class="table table-bordered">
+          <tr>
+            <th>Dataset</th>
+            <th>HA Type</th>
+            <th>RMSE</th>
+            <th>Actual Total</th>
+            <th>Predicted Total</th>
+            <th>Difference</th>
+          <tr>
+            <td rowspan="4">In-Sample (FL/TX)</td>
+          </tr>
+          <tr>
+            <td>Repair/replacement</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Rental Assistance</td>
+            <td>343.11</td>
+            <td>$89.6M</td>
+            <td>$89.2M</td>
+            <td>-0.5%</td>
+          </tr>
+          <tr>
+            <td>Total</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td rowspan="4">Out-Sample (NC)</td>
+          </tr>
+          <tr>
+            <td>Repair/replacement</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Rental Assistance</td>
+            <td>179,55</td>
+            <td>$29.9M</td>
+            <td>$31.6M</td>
+            <td>5.7%</td>
+          </tr>
+          <tr>
+            <td>Total</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </table>
+        <br>
+        <br>
+      </div>
+    </div>
+
+  </body>
+</html>
