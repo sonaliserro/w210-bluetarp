@@ -157,15 +157,6 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
             <li><a href="index.html">Home<span class="sr-only">(current)</span></a></li>
-            <li class="dropdown active">
-              <a href="approach.html" role="button" aria-haspopup="true" aria-expanded="false">Approach<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="approach.html#model-pipeline">Modeling Pipeline</a></li>
-                <li><a href="approach.html#model-perform">Model Performance</a></li>
-                <li><a href="approach.html#model-select">Model Selection</a></li>
-                <li><a href="approach.html#rf-perform">Random Forest Performance</a></li>
-              </ul>
-            </li>
             <li class="dropdown">
               <a href="data.html" role="button" aria-haspopup="true" aria-expanded="false">Data<span class="caret"></span></a>
               <ul class="dropdown-menu">
@@ -176,16 +167,24 @@
                 <li><a href="data.html#ara">ARA Hurricane Wind Speed Data</a></li>
               </ul>
             </li>
-            <li class="dropdown">
-              <a href="findings.html" role="button" aria-haspopup="true" aria-expanded="false">Findings<span class="caret"></span></a>
+            <li class="dropdown active">
+              <a href="approach.html" role="button" aria-haspopup="true" aria-expanded="false">Approach<span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
+                <li><a href="approach.html#model-pipeline">Modeling Pipeline</a></li>
+                <li><a href="approach.html#model-select">Model Selection</a></li>
+                <li><a href="approach.html#model-perform">Model Performance</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="findings.html" role="button" aria-haspopup="true" aria-expanded="false">Results<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="findings.html#model-results">Model Results</a></li>
+                <li><a href="findings.html#county-dash">County Dashboard</a></li>
+                <li><a href="findings.html#post-analysis">Post-Analysis</a></li>
               </ul>
             </li>
             <li><a href="conclusion.html">Conclusion</a></li>
-            <li><a href="contact.html">Contact</a></li>
+            <li><a href="contact.html">Team</a></li>
           </ul>
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
@@ -223,8 +222,8 @@
       </div>
       <div class="intro-box">
         <div class="intro-box-heading">
-          <span class="anchor" id="model-perform"></span>
-          <span class="badge badge-pill">Model Performance</span>
+          <span class="anchor" id="model-select"></span>
+          <span class="badge badge-pill">Model Selection</span>
         </div>
         <div class="intro-box-body">
           <p>A number of regressors were evaluated during the model development phase and performance  was primarily evaluated using the Root Mean Squared Error (RMSE) and Mean Absolute Error (MAE).  Additionally, models with regularization options were favored due to their ability to generalize well to unseen data.  Linear models, decision trees, neural nets and various ensemble models (boosting/bagging) were under consideration initially.  A brief description of each model is outlined below, followed by a summary of their performance against the in-sample (Florida/Texas) validation set.</p>
@@ -238,8 +237,8 @@
       </div>
       <div class="intro-box">
         <div class="intro-box-heading">
-          <span class="anchor" id="model-select"></span>
-          <span class="badge badge-pill">Model Selection</span>
+          <span class="anchor" id="model-perform"></span>
+          <span class="badge badge-pill">Model Performance</span>
         </div>
         <div class="intro-box-body">
           <p>The following graphs display the in-sample performance of each candidate model on the held out validation set for Florida and Texas.  Lasso and AdaBoost did not perform as well as the other models (higher RMSE and MAE) and as such were dropped from contention.  The performance of the remaining models were generally equivalent and so the strengths and weaknesses of each model were taken into consideration in order to find the best option for our dataset and project.</p>

@@ -157,15 +157,6 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
             <li><a href="index.html">Home<span class="sr-only">(current)</span></a></li>
-            <li class="dropdown">
-              <a href="approach.html" role="button" aria-haspopup="true" aria-expanded="false">Approach<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="approach.html#model-pipeline">Modeling Pipeline</a></li>
-                <li><a href="approach.html#model-perform">Model Performance</a></li>
-                <li><a href="approach.html#model-select">Model Selection</a></li>
-                <li><a href="approach.html#rf-perform">Random Forest Performance</a></li>
-              </ul>
-            </li>
             <li class="dropdown active">
               <a href="data.html" role="button" aria-haspopup="true" aria-expanded="false">Data<span class="caret"></span></a>
               <ul class="dropdown-menu">
@@ -177,15 +168,23 @@
               </ul>
             </li>
             <li class="dropdown">
-              <a href="findings.html" role="button" aria-haspopup="true" aria-expanded="false">Findings<span class="caret"></span></a>
+              <a href="approach.html" role="button" aria-haspopup="true" aria-expanded="false">Approach<span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
+                <li><a href="approach.html#model-pipeline">Modeling Pipeline</a></li>
+                <li><a href="approach.html#model-select">Model Selection</a></li>
+                <li><a href="approach.html#model-perform">Model Performance</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="findings.html" role="button" aria-haspopup="true" aria-expanded="false">Results<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="findings.html#model-results">Model Results</a></li>
+                <li><a href="findings.html#county-dash">County Dashboard</a></li>
+                <li><a href="findings.html#post-analysis">Post-Analysis</a></li>
               </ul>
             </li>
             <li><a href="conclusion.html">Conclusion</a></li>
-            <li><a href="contact.html">Contact</a></li>
+            <li><a href="contact.html">Team</a></li>
           </ul>
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->
@@ -229,7 +228,8 @@
             <li>Rental assistance</li>
           </ul>
           <p>These three payments types make up the Housing Assistance program and are collectively referred to as the Housing Assistance (HA) Amount.  This is the target variable of interest in this study and as such will serve as the basis for the comparison of financial aid allocations across the U.S. states and territories.</p>
-          <p>The following visualizations give a sense of the magnitude of FEMA’s Housing Assistance program, by displaying payments made to Florida and Texas communities, during 2017.</p>
+          <p>The following visualizations give a sense of the magnitude of FEMA’s Housing Assistance program, by displaying payments made to Florida, Texas, and Puerto Rico communities, during 2017.</p>
+          <img class="block-img" src="ha_breakdown.png" alt="Breakdown of HA Components in Total Amounts for FL, TX, and PR">
         </div>
       </div>
       <div class="intro-box">
@@ -242,8 +242,6 @@
           <ul>
             <li><i>Socioeconomic factors</i> – poverty, income, unemployment and educational attainment</li>
             <li><i>Housing characteristics</i> – homeownership rates, residence type and structural aspects such as year built</li>
-            <li><i>Nativity and citizenship</i> – nationality and citizenship status</li>
-            <li><i>Public assistance</i> – financial assistance and food stamps</li>
           </ul>
           <p>The demographic database will make it possible to analyze whether any relationship exists between socioeconomic status and the amount of FEMA aid received.  It is also a key component of the post-analysis which will investigate whether socioeconomic status is a predictor of the damages sustained during a hurricane.</p>
           <br>
@@ -260,7 +258,7 @@
         <div class="intro-box-body">
           <p>Fair Market Rates (FMRs) are gross rent estimates established by the U.S. Department of Housing and Urban Development.  FMRs include the shelter rent plus the cost of utilities and reflects the 40th percentile for gross rents for regular rental units occupied by recent movers in a local housing market, i.e. within a given county.  FMRs are a key component of FEMA’s payment calculation when setting the rental assistance rates for communities in the wake of a disaster.</p>
           <br>
-          <img class="block-img" src="fema-ihp-fmr-calculator.png" alt="FEMA Fair Market Rate Calculator">
+          <img class="block-img" src="data-FMR.png" alt="HUD FMR for PR, TX, and FL">
           <br>
           <br>
         </div>
