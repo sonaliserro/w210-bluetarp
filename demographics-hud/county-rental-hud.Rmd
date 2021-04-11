@@ -75,6 +75,7 @@ d_hud <- d_hud[state_alpha %in% c('FL', 'TX', 'PR', 'NC'), c('fips', 'fmr0', 'fm
 head(d_hud)
 ```
 
+
 ## Census and HUD Joined
 
 ```{r}
@@ -89,5 +90,19 @@ fwrite(d_full, file = '../data/hud/HUD-FMR-with-demo.csv')
 ```
 
 
+## HUD FMR for Website Visualization
 
+```{r}
+# County aggregate
+d_county_housing <- d_demo[ , .(total_population = sum(total_population),
+                                total_housing_units = sum(total_housing_units),
+                                occupied_housing_units = sum(occupied_housing_units),
+                                renter_occupied = sum(renter_occupied)), keyby = c('fips', 'county')]
+
+# Left join to full data
+d_full_hud <- merge(x = d_county_housing, y = d_hud, by = 'fips', all.x = TRUE)
+
+# Write to csv
+fwrite(d_full_hud, file = '../data/hud/HUD-FMR-with-demo-website.csv')
+```
 
