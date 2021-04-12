@@ -78,8 +78,8 @@
       }
 
       #viz1 {
-        width: 1233px;
-        height: 925px;
+        width: 1000px;
+        height: 750px;
         display: block;
         margin-left: auto;
         margin-right: auto;
@@ -126,6 +126,13 @@
 
       #lm-img {
         width: 60%;
+      }
+      #results-img {
+        width: 50%;
+      }
+
+      #donut-img {
+        width: 50%;
       }
 
       .navbar {
@@ -242,21 +249,31 @@
           <span class="badge badge-pill">Model Results</span>
         </div>
         <div class="intro-box-body">
-          <p>Insert model results here.</p>
+          <p>The Random Forest Regressors predicted the relevant components of the Housing Assistance program and the results indicate that Puerto Rico did not receive an entirely equitable allocation of Housing Assistance aid, compared with Florida and Texas.</p>
+          <img class="block-img" id="donut-img" src="results-donuts.png" alt="Visualization of percent gap between actual and predicted housing assistance">
+          <br>
+          <p>The Repair/Replacement Assistance predictions were very similar to the actual amount of aid 	allocated, differing by just -0.2%.  This is a reassuring finding, as housing repairs and replacement homes amounted to $529M and accounts for 83% of all Housing Assistance aid allocated by FEMA in response to Hurricane Maria.  This findings reinforces one of the guiding principles which underpins the Housing Assistance Program - that aid is allocated consistently.  That is, based on the damages sustained, a consistent amount of aid has been allocated for households that were inspected.</p>
+          <p>For Rental Assistance, the model however predicted that $155M should have been paid out in aid, 46% more than the $106M actually allocated.  Put another way, the $49M gap indicates that Puerto Rico received 32% less in Rental Assistance aid than would otherwise be expected, based on the monetary amounts awarded to Florida and Texas.</p>
+          <p>Rental Assistance provides impacted households with a financial stop-gap which allows them to transition to more habitable accommodation, if available.  Analysis of FEMA’s IHP Valid Registrations dataset revealed that approximately 20% of program applicants were unable to claim Rental Assistance aid, due to a lack of alternative housing in Puerto Rico.  A likely explanation for this is that the entire island was decimated by Hurricane Maria and unlike most mainland U.S. states, Puerto Rico does not have any neighbouring states within which residents can seek refuge.  Therefore, Puerto Rico presents somewhat of a unique case to FEMA in terms of their disaster preparedness and recovery process.</p>
         </div>
       </div>
       <div class="intro-box">
         <div class="intro-box-heading">
           <span class="anchor" id="county-dash"></span>
-          <span class="badge badge-pill">County Dashboard</span>
         </div>
       </div>
       <div class="tableau-viz">
         <br>
         <br>
-        <iframe id="viz1" src="https://public.tableau.com/views/ProjectBlueTarpFindings/Dashboard1?::showVizHome=no&:embed=true" onload="this.height=this.content Window.document.body.scrollHeight;"></iframe>
+        <iframe id="viz1" src="https://public.tableau.com/views/PuertoRico-HousingAssistance/county-dash?::showVizHome=no&:embed=true" onload="this.height=this.content Window.document.body.scrollHeight;"></iframe>
         <br>
         <br>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-body">
+          <p>Every county in Puerto Rico was estimated to have experienced a shortfall in Housing Assistance aid, relative to Florida and Texas.  On average, Puerto Rico received a shortfall of 7.3% and this was primarily driven by the Rental Assistance gap described previously.  Interestingly, the largest estimated gap (-15.9%) occurred in San Juan Municipio, which encompasses the island’s capital city of San Juan, and is the most populous county in Puerto Rico.  A plausible explanation is that San Juan also has the largest percentage of renters of all counties, accounting for 46% of households.  This likely contributed to a greater influx in Rental Assistance applications, many of which were not allocated aid due to a lack of alternative housing being available.</p>
+          <p>Another county of note is Ponce Municipio, estimated to have experienced a shortfall of 6.7% in Housing Assistance aid.  Ponce sustained the largest amount in FEMA-estimated damages ($47M) and similarly received the most in Housing Assistance aid ($26M).  The amounts awarded for housing repairs and replacements homes was the most of any county.  Ponce also had a relatively low proportion of rental assistance applications which explains why the county experienced a more favorable Housing Assistance shortfall than San Juan.  For reference, Ponce and San Juan were allocated similar amounts in Housing Assistance aid, $26M and $24M respectively, yet San Juan residents were unable to benefit from aid to the same extent.</p>
+        </div>
       </div>
       <div class="intro-box">
         <div class="intro-box-heading">
@@ -297,7 +314,21 @@
           <img class="block-img" id="lm-img" src="lm-test.png" alt="Lagrange Multiplier test results">
           <h3>Spatial Error Model</h3>
           <p>A spatial error model evaluates the extent to which the clustering of an outcome variable not explained by measured independent variables can be accounted for with reference to the spatial clustering of error terms. And in a sense it will correct for standard statistical procedures for the effect of spatial dependence [3]. Once the spatial error model has been fit, we can evaluate it using the spatial Hausman test with the null hypothesis that the SEM and the OLS models are giving us the same estimates. We fit a SEM model to the dataset using the neighbors defined above and the results of the spatial Hausman test (p-value = 0.07219), indicate that the SEM estimates are valid.</p>
-          <br>
+          <h2>Results</h2>
+          <p>The table below shows the results of the OLS and Spatial Error model(s). Given that our OLS models showed signs of heteroskedasticity, we needed to examine the influence of spatial autocorrelation, since if present, it would likely bias any resultant inferences. And as we found evidence of spatial dependence, we will not be discussing the results of the OLS model, and the coefficients and tests of significance are presented alongside those of the spatial error model for the reader to compare.</p>
+          <p>We found that both peak wind gusts and water levels were significant predictors of damages. This is expected as higher wind speeds and water levels are both correlated with disaster-caused damages to property. It is interesting to note however that peak wind gusts appear to be less significant in the SEM model compared to the OLS model, and this is probably related to the fact that we are examining the effects of a natural disaster, which follows a certain path making certain geographic clusters more susceptible to the effects of the storm. We observe that <i>Below Poverty Rate</i> is a significant predictor of damages (p-value=0.01805). For every unit increase in the below poverty rate, we can expect an increase of approximately 1.5% in the amount of damages per capita. This is not only a statistically significant but also a practically significant finding. We also find that communities with a greater number of homes built in the year 1979 or earlier, suffer more damages, on average.</p>
+          <img class="block-img" id="results-img" src="results.png" alt="OLS & Spatial Error model results">
+          <h2>Discussion</h2>
+          <p>These results of our study highlight the disproportionate post-disaster outcomes for specific communities in that poverty is found to be significantly correlated with property damages. This finding does suggest that perhaps more emphasis should be given to these vulnerable populations during disaster response and recovery. A limitation of this study is that it only accounts for populations that applied for Individual Assistance and whose properties were inspected by FEMA. We are unable to include damage data for applicants who were unable to register for assistance, perhaps due to accessibility issues, or who were denied inspections. Furthermore, we chose to include only a subset of socio-demographic indicators from a vast collection of data points available through the Census Bureau, and further research could include additional characteristics (race, gender, household composition, language, minority status). Nevertheless, this research provides important insights into post-disaster needs by highlighting specific vulnerable groups in the state of Puerto Rico requesting assistance following Hurricane Maria.</p>
+          <h2>References</h2>
+          <ol>
+            <li>Using Disaster Outcomes to Validate Components of Social Vulnerability to Floods: Flood Deaths and Property Damage across the USA, https://www.mdpi.com/2071-1050/12/15/6006</li>
+            <li>Social vulnerability to environmental hazards, https://onlinelibrary.wiley.com/doi/abs/10.1111/1540-6237.8402002</li>
+            <li>https://ibis.geog.ubc.ca/~brian/workshop/GeoDa_Spatial_Regression.pdf</li>
+            <li>https://svi.cdc.gov/A%20Social%20Vulnerability%20Index%20for%20Disaster%20Management.pdf</li>
+            <li>Assessing the Relationship between Social Vulnerability, Social Capital, and Housing Resilience, https://www.mdpi.com/2071-1050/12/18/7718/htm</li>
+            <li>https://rpubs.com/quarcs-lab/tutorial-spatial-regression</li>
+          </ol>
         </div>
       </div>
     </div>
