@@ -944,10 +944,36 @@ tail(d_full)
 fwrite(d_full, file = '../data/census-tract/census-tract-demographics.csv')
 ```
 
+## County FIPS Lookup
+
+```{r}
+# Read csv
+d <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
+
+# Create FIPS code
+d[ , `:=` (fips_code = substr(tractid, 1, 5))]
+
+```
+
+```{r}
+# Aggregate by county
+d_county <- d[ , .(total_population = sum(total_population),
+                   total_housing_units = sum(total_housing_units),
+                   occupied_housing_units = sum(occupied_housing_units),
+                   renter_occupied = sum(renter_occupied),
+                   below_poverty_rate = sum(below_poverty_rate),
+                   total_households_poverty = sum(total_households_poverty)), keyby = c('fips_code', 'county', 'state')]
+
+# Write to csv
+fwrite(d_county, file = '../data/census-tract/county-lookup-demographics.csv')
+```
+
+
+
 ## Omit Record with NAs
 
 ```{r}
-# Write to csv
+# Read csv
 d_trim <- fread(file = '../data/census-tract/census-tract-demographics.csv', encoding = 'UTF-8')
 
 d_trim <- na.omit(d_trim, cols=c('below_poverty_rate', 'unemployed_labor_rate', 'median_earnings_total', 'owner_occupied_rate', 'built_1979_or_earlier_rate'))
