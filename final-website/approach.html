@@ -173,6 +173,7 @@
                 <li><a href="approach.html#model-pipeline">Modeling Pipeline</a></li>
                 <li><a href="approach.html#model-select">Model Selection</a></li>
                 <li><a href="approach.html#model-perform">Model Performance</a></li>
+                <li><a href="approach.html#feature-importance">Feature Importance</a></li>
               </ul>
             </li>
             <li class="dropdown">
@@ -234,22 +235,15 @@
           <p><b>XGBoost</b> – an enhanced version of gradient boosting which has become popular due to its training speed and improved predictive power.  The latter is achieved using the second order derivative of the loss function which yields more information about the direction of the gradient.</p>
           <p><b>Random Forest</b> – an ensemble of decision trees that uses bagging methods.  In bagging, each tree is trained on a different sample of the full training set.  Random Forests uses an extension of this called bootstrap sampling in which sampling with replacement takes place.  A number of regularization options are available – for instance, selecting a subset of features at each split point when constructing trees, resulting in trees which are more varied across the ensemble.  It is desirable for trees to remain unpruned as this increased variability produces less correlated predictions and errors.  Predictions across all trees are then averaged, generating more accurate predictions than can be achieved using a single tree.</p>
         </div>
-      </div>
-      <div class="intro-box">
-        <div class="intro-box-heading">
-          <span class="anchor" id="model-perform"></span>
-          <span class="badge badge-pill">Model Performance</span>
-        </div>
         <div class="intro-box-body">
-          <p>The following graphs display the in-sample performance of each candidate model on the held out validation set for Florida and Texas.  Lasso and AdaBoost did not perform as well as the other models (higher RMSE and MAE) and as such were dropped from contention.  The performance of the remaining models were generally equivalent and so the strengths and weaknesses of each model were taken into consideration in order to find the best option for our dataset and project.</p>
-          <img class="float-img" src="approach-performance-rmse.png" alt="Performance results based on RMSE">
-          <img class="float-img" src="approach-performance-mae.png" alt="Performance results based on MAE">
+          <p>The following table displays the in-sample performance of each candidate model on the held out validation set for Florida and Texas.  Lasso and AdaBoost did not perform as well as the other models (higher RMSE and MAE) and as such were dropped from contention.  Apart from performance and interpretability, having a model that generalized well and whose predictions were within bounds was important. This led us to choose the Random Forest Regression Model, an ensemble of decision trees, as our final model of choice.</p>
+          <img class="block-img" src="model-selection.png" alt="Model Selection criteria">
         </div>
       </div>
       <div class="intro-box">
         <div class="intro-box-heading">
           <span class="anchor" id="rf-perform"></span>
-          <span class="badge badge-pill">Random Forest Performance</span>
+          <span class="badge badge-pill">Model Performance</span>
         </div>
         <div class="intro-box-body">
           <p>The Random Forest Regressor was optimized further using additional hyperparameters to ensure generalizability.  Prior to predicting HA Amount on Puerto Rico, the model’s out-of-sample performance was assessed to demonstrate the accuracy and reliability of predictions on new and unseen data.  For this, OpenFEMA data was obtained for North Carolina, which was hit by hurricane Florence in 2018.  Our model’s performed equally well in-sample and out-sample, generating equivalent RMSEs and predictions within <b>X.XX?</b> of the actual HA Amounts allocated.  These results demonstrate our model’s ability to reliably capture the two separate payment mechanisms which underpin FEMA’s Housing Assistance program - home repair-replacement and rental assistance.  The accuracy of the predictions reinforces our assertion that the magnitude of any difference observed between the predicted HA Amount and the actual HA Amount received, will indicate the extent to which there is inequitable access or allocation of housing assistance aid in Puerto Rico.</p>
@@ -259,58 +253,75 @@
             <th>Dataset</th>
             <th>HA Type</th>
             <th>RMSE</th>
+            <th>MAE</th>
             <th>Actual Total</th>
             <th>Predicted Total</th>
-            <th>Difference</th>
           <tr>
             <td rowspan="4">In-Sample (FL/TX)</td>
           </tr>
           <tr>
             <td>Repair/replacement</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>453.58</td>
+            <td>29.01</td>
+            <td>$217.3M</td>
+            <td>$217.0M</td>
           </tr>
           <tr>
             <td>Rental Assistance</td>
-            <td>343.11</td>
+            <td>341.76</td>
+            <td>30.52</td>
             <td>$89.6M</td>
             <td>$89.2M</td>
-            <td>-0.5%</td>
           </tr>
           <tr>
             <td>Total</td>
             <td></td>
             <td></td>
-            <td></td>
-            <td></td>
+            <td>$306.9M</td>
+            <td>$306.2M</td>
           </tr>
           <tr>
             <td rowspan="4">Out-Sample (NC)</td>
           </tr>
           <tr>
             <td>Repair/replacement</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>777.29</td>
+            <td>77.05</td>
+            <td>$55.0M</td>
+            <td>$62.1M</td>
           </tr>
           <tr>
             <td>Rental Assistance</td>
-            <td>179,55</td>
+            <td>170.53</td>
+            <td>47.16</td>
             <td>$29.9M</td>
-            <td>$31.6M</td>
-            <td>5.7%</td>
+            <td>$31.2M</td>
           </tr>
           <tr>
             <td>Total</td>
             <td></td>
             <td></td>
-            <td></td>
-            <td></td>
+            <td>$84.9M</td>
+            <td>$92.2M</td>
           </tr>
         </table>
+       <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="feature-importance"></span>
+          <span class="badge badge-pill">Feature Importance</span>
+        </div>
+	<div class="intro-box-body">
+          <p><i>K-Means Clustering</i></p>
+          <p>Below you can visualize the results of unsupervised clustering using K-Means on a subset of FEMA’s IHP variables. We can see that the dataset is best divided into 3 clusters, with the one in the middle representing the applications that likely received housing assistance as a result of damages suffered from the disaster. ‘Inspected’ appears to be the most important feature differentiating the clusters, and this resonates with our domain experts, as receiving an inspection by FEMA is the first step in being able to receive any form of Housing Assistance.</p>
+          <img class="block-img" src="k-means-clustering.png" alt="K-Means Clustering">
+	  <br>
+	  <p><i>Random Forest Feature Importance</i></p>
+          <p>We also wanted to be able to identify factors that were influential in predicting Housing Assistance outcomes to enable transparency and to allow us to translate some of our findings into actionable results. From the feature importances of our optimized Random Forest Regressor models, we can see that FEMA’s estimated value of disaster-caused damages, a few eligibility flags, whether the applicant had flood and/or homeowner’s insurance, and household composition are some of the most important predictors. </p>
+          <img class="float-img" src="rental-feature-importances.png" alt="Rental Pipeline Feature Importances">
+          <img class="float-img" src="repair-replace-feature-importances.png" alt="Repair-Replace Pipeline feature Importances">
+        </div>
+      </div>
+
         <br>
         <br>
       </div>
