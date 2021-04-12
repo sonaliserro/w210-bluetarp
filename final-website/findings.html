@@ -30,6 +30,18 @@
         font-size: 4.5rem;
       }
 
+      h2 {
+        font-weight: bold;
+        font-size: 2rem;
+        padding-top: 0;
+      }
+
+      h3 {
+        font-style: italic;
+        font-size: 1.8rem;
+        margin-top: 0;
+      }
+
       .badge-pill {
         background-color: #eeee81;
         padding: 5px 12px;
@@ -80,6 +92,40 @@
 
       .main-content {
         padding-left: 10%;
+      }
+
+      .block-img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #dmg-img {
+        width: 60%;
+      }
+
+      #svi-img {
+        width: 80%;
+      }
+
+      #peak-wind-img {
+        width: 80%;
+      }
+
+      #flood-img {
+        width: 90%;
+      }
+
+      #ols-img {
+        width: 70%;
+      }
+
+      #neighbors-img {
+        width: 80%;
+      }
+
+      #lm-img {
+        width: 60%;
       }
 
       .navbar {
@@ -190,10 +236,69 @@
           <h1>Results</h1>
           <br>
       </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="model-results"></span>
+          <span class="badge badge-pill">Model Results</span>
+        </div>
+        <div class="intro-box-body">
+          <p>Insert model results here.</p>
+        </div>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="county-dash"></span>
+          <span class="badge badge-pill">County Dashboard</span>
+        </div>
+      </div>
       <div class="tableau-viz">
+        <br>
+        <br>
         <iframe id="viz1" src="https://public.tableau.com/views/ProjectBlueTarpFindings/Dashboard1?::showVizHome=no&:embed=true" onload="this.height=this.content Window.document.body.scrollHeight;"></iframe>
         <br>
         <br>
+      </div>
+      <div class="intro-box">
+        <div class="intro-box-heading">
+          <span class="anchor" id="post-analysis"></span>
+          <span class="badge badge-pill">Post-Analysis</span>
+        </div>
+        <div class="intro-box-body">
+          <h2>Abstract</h2>
+          <p>This research examines the relationship between social vulnerability factors and observed damages in the state of Puerto Rico following Hurricane Maria. We use spatial linear regression models to identify predictor variables from a subset of socio-demographic and housing indicators for disaster-caused damages to both real and personal property. Data consists of census tracts in the state that reported the need for assistance to FEMA’s Individuals and Households Program (N=884). The results suggest that when controlling for disaster-specific factors, such as peak wind gusts and water levels, communities with greater poverty rates suffered more damages, on average. This finding highlights that perhaps more emphasis should be placed on these vulnerable groups in disaster response and recovery planning.</p>
+          <h2>Introduction</h2>
+          <p>The United Nations International Strategy for Disaster Reduction (UNISDR) defines vulnerability as <i>“the characteristics and circumstances of a community, system or asset that make it susceptible to the damaging effects of a hazard”</i> (UNISDR 2009, p. 30).  And prior research has shown that vulnerability is the propensity for loss of lives, livelihood or property when exposed to a hazard [1]. To that effect, our study assesses the relationship between socio-demographic factors and observed property damages in the aftermath of Hurricane Maria, a category four hurricane that moved diagonally across the island, devastating both land and life. All 78 municipalities in Puerto Rico were deemed eligible for Individual Assistance by FEMA.</p>
+          <p>Research identifying social factors that lead to a higher propensity for property damages have included renter status, income, race and poverty [2]. As a result, we chose to include a subset of socio-demographic and housing indicators that we felt were relevant based on prior work. The social factors we include are at the census tract level, which means that the relationships in this study apply to broader geographic scales rather than at the individual level.</p>
+          <h2>Data & Methods</h2>
+          <h3>Damages Data</h3>
+          <p>Once disaster survivors register for the Individuals and Households assistance, FEMA is required to verify losses to determine their eligibility for IHP Assistance (<a href="https://www.fema.gov/sites/default/files/2020-05/IHP_Unified_Guidance_FINAL_09272016_0.pdf">IHP Unified Guidance</a> 2016, p. 41). A FEMA inspector assesses disaster-caused damages to the applicant’s pre-disaster residence and personal property such as furniture, appliances, vehicles, and essential equipment for daily household needs, and this dollar value is subsequently recorded. Our research utilizes these applicant-level attributes that have been made available through OpenFEMA’s public API. The individual damage data is aggregated at the census tract level and a per-capita value is calculated using population data available for the census tract from the US Census Bureau’s 2017 American Community Survey, 5-year estimates. The distribution is highly skewed (see fig), and so we perform a log transformation of the variable which serves as our outcome variable of interest.</p>
+          <img class="block-img" id="dmg-img" src="damage-amount-per-capita.png" alt="Transformation of Outcome Variable (Damages per Capita)">
+          <h3>Social Vulnerability Data</h3>
+          <p>The socio-demographic and housing indicators for this study are sourced from the U.S. Census Bureau’s 2017 American Community Survey, 5-year estimates. We download and calculate the following indicators that are available at the census tract level: <i>Below Poverty Rate, Bachelor’s Degree Rate, Unemployed Labor Rate, Homes built 1979 or Earlier Rate, and Owner Occupied Rate.</i> These variables serve as the predictors for our analysis.</p>
+          <br>
+          <img class="block-img" id="svi-img" src="demographics.png" alt="Distributions of socio-demographic data">
+          <h3>Hurricane Wind Speeds</h3>
+          <p>We include hurricane peak wind gusts to control for disaster-specific factors using the wind speed data made available by Applied Research Associates, Inc. (ARA). Hurricane wind speeds can be used to estimate potential property damage using the Saffir-Simpson Hurricane Wind Scale. We calculate average wind speed and a corresponding wind scale value for each census tract for the state. Including this data in the analysis allows us to examine the hurricane impact to communities that had different levels of social vulnerability but experienced similar wind speeds.</p>
+          <img class="block-img" id="peak-wind-img" src="peak-wind-gust-census-tract.png" alt="Peak wind gusts by census tract">
+          <h3>Water Levels</h3>
+          <p>Another control for disaster-specific factors is the measured water levels. During a FEMA on-site inspection, the total depth of water affecting the damaged dwelling, in inches, is recorded. Once again using the OpenFEMA’s public disaster dataset, we calculate the average water level recorded for each census tract. This is visually compared to Puerto Rico’s flood lines as a verification of the data to be used to control for flood-related damages.</p>
+          <img class="block-img" id="flood-img" src="water-levels-flood-lines.png" alt="Water levels by census tract and flood line zones in Puerto Rico">
+          <h2>Regression Models</h2>
+          <h3>Ordinary Least Squares (OLS)</h3>
+          <p>We developed OLS Regression Models with the per-capita damage amount as the outcome variable of interest, and the list of socio-demographic and housing indicators from above as independent variables. The hurricane wind speed and water level attributes were used as controls for disaster-specific factors. However, our models showed violation of regression assumptions with a failing studentized Breusch-Pagan test (p-value = 0.000000000001787) that indicates the presence of heteroskedasticity.</p>
+          <p>Regressions using observations from spatial data, such as US census tracts, can be influenced by spatial autocorrelation, which means the observations are not independent of each other. If the model residuals from a regression are spatially clustered beyond random chance, standard regression estimates cannot be trusted, as some variables could inflate the coefficient values, invalidating the tests of significance.  The map below shows the residuals from the OLS model. </p>
+          <img class="block-img" id="ols-img" src="ols-residuals.png" alt="Puerto Rico map that shows the residuals from the OLS model">
+          <h3>Spatial Autocorrelation</h3>
+          <p>Moran’s I is a test for spatial dependency in the residuals in an OLS model. In order to run the test, we needed to load the census tract shapefiles (downloaded from the census <a href="https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
+            ">website</a>) and define a list of neighbors with boundaries. We have a total of 886 regions and 5136 non-zero links between them, with the average number of links being 5.8. This is visualized below:</p>
+          <img class="block-img" id="neighbors-img" src="neighbors.png" alt="Puerto Rico map that shows autocorrelation">
+          <p>The results of the <i>Global Moran's I for regression residuals</i> had a p-value=2.935e-10, which means we had to reject the null hypothesis that there is no spatial dependency between the residuals.</p>
+          <p>If the residuals are diagnosed to be spatially dependent, a remedial measure is to expand the linear regression model to a spatial linear regression model as indicated by the results of the Lagrange Multiplier test. The test evaluates the appropriateness of the spatial lag model and the spatial error model, and in the event that both lag and error dependence are found to be significant, we use the results of the Robust LM test. Based on the results from the test (see table below), we fit a spatial error model to our dataset.</p>
+          <img class="block-img" id="lm-img" src="lm-test.png" alt="Lagrange Multiplier test results">
+          <h3>Spatial Error Model</h3>
+          <p>A spatial error model evaluates the extent to which the clustering of an outcome variable not explained by measured independent variables can be accounted for with reference to the spatial clustering of error terms. And in a sense it will correct for standard statistical procedures for the effect of spatial dependence [3]. Once the spatial error model has been fit, we can evaluate it using the spatial Hausman test with the null hypothesis that the SEM and the OLS models are giving us the same estimates. We fit a SEM model to the dataset using the neighbors defined above and the results of the spatial Hausman test (p-value = 0.07219), indicate that the SEM estimates are valid.</p>
+          <br>
+        </div>
       </div>
     </div>
   </body>

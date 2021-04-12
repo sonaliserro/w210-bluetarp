@@ -65,17 +65,9 @@
         max-width: 90%;
       }
 
-      #home-viz {
-        width: 925px;
-        height: 1233px;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
       /* Make logo fit width of nav bar */
       #logo {
-        height: 55px
+        height: 55px;
       }
 
       .main-content {
@@ -103,7 +95,6 @@
       }
 
       .block-img {
-        width: 60%;
         display: block;
         margin-left: auto;
         margin-right: auto;
@@ -112,8 +103,29 @@
       .float-img {
         width: 47%;
         display: float;
+        float: center;
         marign-left: auto;
         margin-right: auto;
+      }
+
+      #fema-img {
+        width: 50%;
+      }
+
+      #demo-img {
+        width: 80%;
+      }
+
+      #fmr-img {
+        width: 60%;
+      }
+
+      #nhc-left {
+        margin-right: 15px;
+      }
+
+      #ara-img {
+        width: 80%;
       }
 
       .anchor {
@@ -229,7 +241,7 @@
           </ul>
           <p>These three payments types make up the Housing Assistance program and are collectively referred to as the Housing Assistance (HA) Amount.  This is the target variable of interest in this study and as such will serve as the basis for the comparison of financial aid allocations across the U.S. states and territories.</p>
           <p>The following visualizations give a sense of the magnitude of FEMA’s Housing Assistance program, by displaying payments made to Florida, Texas, and Puerto Rico communities, during 2017.</p>
-          <img class="block-img" src="ha_breakdown.png" alt="Breakdown of HA Components in Total Amounts for FL, TX, and PR">
+          <img class="block-img" id="fema-img" src="ha_breakdown.png" alt="Breakdown of HA Components in Total Amounts for FL, TX, and PR">
         </div>
       </div>
       <div class="intro-box">
@@ -245,7 +257,7 @@
           </ul>
           <p>The demographic database will make it possible to analyze whether any relationship exists between socioeconomic status and the amount of FEMA aid received.  It is also a key component of the post-analysis which will investigate whether socioeconomic status is a predictor of the damages sustained during a hurricane.</p>
           <br>
-          <img class="block-img" src="data-demographics.png" alt="Charts: Poverty Rates by State/Territory, Employment Rates by State/Territory">
+          <img class="block-img" id="demo-img" src="data-demographics.png" alt="Charts: Poverty Rates by State/Territory, Employment Rates by State/Territory">
           <br>
           <br>
         </div>
@@ -258,7 +270,7 @@
         <div class="intro-box-body">
           <p>Fair Market Rates (FMRs) are gross rent estimates established by the U.S. Department of Housing and Urban Development.  FMRs include the shelter rent plus the cost of utilities and reflects the 40th percentile for gross rents for regular rental units occupied by recent movers in a local housing market, i.e. within a given county.  FMRs are a key component of FEMA’s payment calculation when setting the rental assistance rates for communities in the wake of a disaster.</p>
           <br>
-          <img class="block-img" src="data-FMR.png" alt="HUD FMR for PR, TX, and FL">
+          <img class="block-img" id="fmr-img" src="data-FMR.png" alt="HUD FMR for PR, TX, and FL">
           <br>
           <br>
         </div>
@@ -270,7 +282,8 @@
         </div>
         <div class="intro-box-body">
           <p>The National Hurricane Center (NHC) is the division of the United States' NOAA/National Weather Service responsible for tracking and predicting tropical weather systems. The agency maintains archives and statistics on Atlantic and Pacific hurricane history, including hurricane forecast tracks, uncertainty cones, and warnings. The datasets are available as GIS shapefiles, a standard format for encoding geospatial information. Incorporating the path of the hurricane in our analysis was an important step in being able to visualize areas of most impact from the storm.</p>
-          <img class="float-img" src="hurricane-maria-track.png" alt="Hurricane Maria Track">
+          <br>
+          <img class="float-img" id="nhc-left" src="hurricane-maria-track.png" alt="Hurricane Maria Track">
           <img class="float-img" src="hurricane-maria-warning-cone.png" alt="Hurricane Maria Warning Cone">
           <br>
           <br>
@@ -284,7 +297,7 @@
         <div class="intro-box-body">
           <p>ARA is a research and engineering company headquartered in Albuquerque, New Mexico, that has developed a hurricane catastrophe model to derive wind speeds and directions of a translating storm. Hurricane wind speeds can be used to estimate potential property damage using the Saffir-Simpson Hurricane Wind Scale (see table). This dataset is used in our post-analysis where peak wind gusts for each census tract are included to control for storm-specific factors across the island.</p>
           <br>
-          <img class="block-img" src="hurricane-maria-peak-wind-gusts.png" alt="Map of Hurricane Maria Peak Wind Gust Speak by County">
+          <img class="block-img" id="ara-img" src="hurricane-maria-peak-wind-gusts.png" alt="Map of Hurricane Maria Peak Wind Gust Speak by County">
         </div>
         <table class="table table-bordered">
           <caption>The Saffir-Simpson Hurricane Wind Scale</caption>
